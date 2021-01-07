@@ -1,0 +1,12 @@
+license="The MIT License (MIT)"
+modLoader="javafml"
+loaderVersion="[31,)"
+[[mods]]
+modId="genericskilllib"
+version="${file.jarVersion}"
+certificateFingerprint = "72cd337644e68ff7257f69b2927894048793e577"
+displayName="Generic Skill Lib"
+authors="Arekkuusu"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/genericskilllib"
+logoFile="logo.png"
+description="Library mod for basic skill functionality"
