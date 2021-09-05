@@ -2,7 +2,7 @@ package arekkuusu.gsl.client;
 
 import arekkuusu.gsl.common.proxy.IProxy;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -10,7 +10,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public class ClientProxy implements IProxy {
 
     @Override
-    public PlayerEntity getPlayer() {
+    public Player getPlayer() {
         return Minecraft.getInstance().player;
     }
 }

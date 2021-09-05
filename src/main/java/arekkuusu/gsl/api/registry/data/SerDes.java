@@ -1,11 +1,11 @@
 package arekkuusu.gsl.api.registry.data;
 
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.util.INBTSerializable;
 
-public abstract class SerDes implements INBTSerializable<CompoundNBT> {
+public abstract class SerDes implements INBTSerializable<CompoundTag> {
 
-    public SerDes(CompoundNBT tag) {
+    public SerDes(CompoundTag tag) {
         deserializeNBT(tag);
     }
 
@@ -14,18 +14,18 @@ public abstract class SerDes implements INBTSerializable<CompoundNBT> {
     }
 
     @Override
-    public CompoundNBT serializeNBT() {
-        CompoundNBT compound = new CompoundNBT();
+    public CompoundTag serializeNBT() {
+        CompoundTag compound = new CompoundTag();
         writeNBT(compound);
         return compound;
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT compound) {
+    public void deserializeNBT(CompoundTag compound) {
         readNBT(compound);
     }
 
-    public abstract void writeNBT(CompoundNBT compound);
+    public abstract void writeNBT(CompoundTag compound);
 
-    public abstract void readNBT(CompoundNBT compound);
+    public abstract void readNBT(CompoundTag compound);
 }

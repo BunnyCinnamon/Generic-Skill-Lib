@@ -3,9 +3,9 @@ package arekkuusu.gsl.common.impl.example;
 import arekkuusu.gsl.api.registry.Effect;
 import arekkuusu.gsl.api.util.WorldHelper;
 import arekkuusu.gsl.common.impl.ExamplesImpl;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.world.entity.player.Player;
 
 public class EffectExample extends Effect {
 
@@ -13,26 +13,26 @@ public class EffectExample extends Effect {
         super(ExamplesImpl.EXAMPLE_EFFECT.get());
     }
 
-    public WorldHelper.WeakWorldReference<PlayerEntity> user;
+    public WorldHelper.WeakWorldReference<Player> user;
     public String message;
 
     @Override
     public void apply() {
-        PlayerEntity playerEntity = user.get();
+        Player playerEntity = user.get();
         if (user.exists()) {
-            playerEntity.sendStatusMessage(new StringTextComponent(message), true);
+            playerEntity.displayClientMessage(new TextComponent(message), true);
         }
     }
 
     @Override
-    public void writeNBT(CompoundNBT compound) {
+    public void writeNBT(CompoundTag compound) {
         compound.putString("message", message);
-        compound.putUniqueId("uuid", user.getID());
+        compound.putUUID("uuid", user.getID());
     }
 
     @Override
-    public void readNBT(CompoundNBT compound) {
+    public void readNBT(CompoundTag compound) {
         message = compound.getString("message");
-        user = WorldHelper.WeakWorldReference.of(compound.getUniqueId("uuid"));
+        user = WorldHelper.WeakWorldReference.of(compound.getUUID("uuid"));
     }
 }

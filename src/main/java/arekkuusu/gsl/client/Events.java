@@ -6,11 +6,11 @@ import arekkuusu.gsl.api.capability.data.Affected;
 import arekkuusu.gsl.api.capability.data.Skilled;
 import arekkuusu.gsl.api.render.EffectRendererDispatcher;
 import arekkuusu.gsl.api.render.SkillRendererDispatcher;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.entity.model.EntityModel;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -24,9 +24,9 @@ import java.util.Iterator;
 @EventBusSubscriber(modid = GSL.ID, value = Dist.CLIENT)
 public class Events {
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onEntityTickActive(LivingEvent.LivingUpdateEvent event) {
-        if (event.getEntityLiving().getEntityWorld().isRemote) {
+        if (event.getEntityLiving().level.isClientSide()) {
             LivingEntity entity = event.getEntityLiving();
             GSLCapabilities.effect(entity).ifPresent(c -> {
                 { //Iterate remove Effects
@@ -58,15 +58,15 @@ public class Events {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onLivingPostRender(RenderLivingEvent.Post<LivingEntity, EntityModel<LivingEntity>> event) {
         if (event.getEntity() == Minecraft.getInstance().player
-                && Minecraft.getInstance().gameSettings.thirdPersonView == 0)
+                && !Minecraft.getInstance().gameRenderer.getMainCamera().isDetached())
             return;
         //
         float partial = event.getPartialRenderTick();
-        MatrixStack stack = event.getMatrixStack();
-        IRenderTypeBuffer buffer = event.getBuffers();
+        PoseStack stack = event.getMatrixStack();
+        MultiBufferSource buffer = event.getBuffers();
         //
         GSLCapabilities.effect(event.getEntity()).ifPresent(c -> {
             for (Affected affected : c.active.values()) {
@@ -82,17 +82,17 @@ public class Events {
         });
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onPlayerScreenRender(RenderWorldLastEvent event) {
         if (Minecraft.getInstance().player == null
-                || Minecraft.getInstance().getRenderManager().options == null
-                || Minecraft.getInstance().gameSettings.thirdPersonView != 0)
+                || Minecraft.getInstance().gameRenderer.getMainCamera() == null
+                || Minecraft.getInstance().gameRenderer.getMainCamera().isDetached())
             return;
         //
         float partial = event.getPartialTicks();
-        MatrixStack stack = event.getMatrixStack();
-        IRenderTypeBuffer buffer = Minecraft.getInstance().getRenderTypeBuffers().getBufferSource();
-        int light = Minecraft.getInstance().getRenderManager().getPackedLight(Minecraft.getInstance().player, event.getPartialTicks());
+        PoseStack stack = event.getMatrixStack();
+        MultiBufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
+        int light = Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(Minecraft.getInstance().player, event.getPartialTicks());
         //
         GSLCapabilities.effect(Minecraft.getInstance().player).ifPresent(c -> {
             for (Affected affected : c.active.values()) {

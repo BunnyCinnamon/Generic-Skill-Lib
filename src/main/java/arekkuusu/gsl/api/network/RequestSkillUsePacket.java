@@ -4,8 +4,8 @@ import arekkuusu.gsl.api.GSLRegistries;
 import arekkuusu.gsl.api.registry.Skill;
 import arekkuusu.gsl.api.util.GSLHelper;
 import arekkuusu.gsl.api.util.WorldHelper;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -15,15 +15,15 @@ public class RequestSkillUsePacket {
     public Skill<?> skill;
     public UUID uuid;
 
-    public static void encoding(RequestSkillUsePacket msg, PacketBuffer buffer) {
+    public static void encoding(RequestSkillUsePacket msg, FriendlyByteBuf buffer) {
         buffer.writeResourceLocation(msg.skill.getRegistryName());
-        buffer.writeUniqueId(msg.uuid);
+        buffer.writeUUID(msg.uuid);
     }
 
-    public static RequestSkillUsePacket decoding(PacketBuffer buffer) {
+    public static RequestSkillUsePacket decoding(FriendlyByteBuf buffer) {
         RequestSkillUsePacket it = new RequestSkillUsePacket();
         it.skill = GSLRegistries.SKILLS.getValue(buffer.readResourceLocation());
-        it.uuid = buffer.readUniqueId();
+        it.uuid = buffer.readUUID();
         return it;
     }
 

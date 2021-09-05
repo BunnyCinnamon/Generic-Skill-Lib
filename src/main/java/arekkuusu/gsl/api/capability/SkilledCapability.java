@@ -6,16 +6,14 @@ import arekkuusu.gsl.api.capability.data.Skilled;
 import arekkuusu.gsl.api.registry.Skill;
 import arekkuusu.gsl.api.util.NBTHelper;
 import com.google.common.collect.Maps;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -28,10 +26,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class SkilledCapability implements ICapabilitySerializable<CompoundNBT>, Capability.IStorage<SkilledCapability> {
+public class SkilledCapability implements ICapabilitySerializable<CompoundTag> {
 
     public static void init() {
-        CapabilityManager.INSTANCE.register(SkilledCapability.class, new SkilledCapability(), SkilledCapability::new);
         MinecraftForge.EVENT_BUS.register(new Handler());
     }
 
@@ -56,29 +53,27 @@ public class SkilledCapability implements ICapabilitySerializable<CompoundNBT>, 
 
     @Override
     @Nonnull
-    public CompoundNBT serializeNBT() {
-        return (CompoundNBT) GSLCapabilities.SKILLED_ENTITY.getStorage().writeNBT(GSLCapabilities.SKILLED_ENTITY, this, null);
+    public CompoundTag serializeNBT() {
+        return writeNBT(this);
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt) {
-        GSLCapabilities.SKILLED_ENTITY.getStorage().readNBT(GSLCapabilities.SKILLED_ENTITY, this, null, nbt);
+    public void deserializeNBT(CompoundTag nbt) {
+        readNBT(this, nbt);
     }
 
     //** NBT **//
 
-    @Nullable
-    @Override
-    public INBT writeNBT(Capability<SkilledCapability> capability, SkilledCapability instance, Direction side) {
-        CompoundNBT tag = new CompoundNBT();
+    public CompoundTag writeNBT(SkilledCapability instance) {
+        CompoundTag tag = new CompoundTag();
         save(tag, "skills", instance.skills.values());
         return tag;
     }
 
-    private void save(CompoundNBT tag, String name, Collection<Skilled> collection) {
-        ListNBT list = new ListNBT();
+    private void save(CompoundTag tag, String name, Collection<Skilled> collection) {
+        var list = new ListTag();
         for (Skilled value : collection) {
-            CompoundNBT nbt = new CompoundNBT();
+            CompoundTag nbt = new CompoundTag();
             NBTHelper.setRegistry(nbt, "skill", value.skill);
             NBTHelper.setNBT(nbt, "context", value.context.serializeNBT());
             list.add(nbt);
@@ -86,17 +81,15 @@ public class SkilledCapability implements ICapabilitySerializable<CompoundNBT>, 
         tag.put(name, list);
     }
 
-    @Override
-    public void readNBT(Capability<SkilledCapability> capability, SkilledCapability instance, Direction side, INBT nbt) {
-        CompoundNBT tag = (CompoundNBT) nbt;
+    public void readNBT(SkilledCapability instance, CompoundTag tag) {
         instance.skills.clear();
         load(tag, "skills", v -> instance.skills.put(v.skill, v));
     }
 
-    private void load(CompoundNBT tag, String name, Consumer<Skilled> consumer) {
-        ListNBT list = NBTHelper.getNBTList(tag, name);
+    private void load(CompoundTag tag, String name, Consumer<Skilled> consumer) {
+        var list = NBTHelper.getNBTList(tag, name);
         for (int i = 0; i < list.size(); i++) {
-            CompoundNBT nbt = list.getCompound(i);
+            CompoundTag nbt = list.getCompound(i);
             Skilled skilled = new Skilled();
             skilled.skill = NBTHelper.getRegistry(nbt, "skill", Skill.class);
             skilled.context = skilled.skill.create();
@@ -111,7 +104,7 @@ public class SkilledCapability implements ICapabilitySerializable<CompoundNBT>, 
         @SubscribeEvent
         public void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
             if (event.getObject() instanceof LivingEntity)
-                event.addCapability(KEY, GSLCapabilities.SKILLED_ENTITY.getDefaultInstance());
+                event.addCapability(KEY, new SkilledCapability());
         }
 
         @SubscribeEvent

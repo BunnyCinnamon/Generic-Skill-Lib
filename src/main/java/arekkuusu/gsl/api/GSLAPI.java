@@ -4,7 +4,7 @@ import arekkuusu.gsl.api.util.ExpressionHelper;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.ints.Int2DoubleArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Tuple;
 
 import java.util.Map;

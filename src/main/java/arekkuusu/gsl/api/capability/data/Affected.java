@@ -10,21 +10,24 @@ public final class Affected {
     public Behavior behavior;
     public BehaviorContext behaviorContext;
 
+    public static <E extends Effect> Builder<E, ?> builder() {
+        return new Builder<>();
+    }
+
     public static class Builder<E extends Effect, B extends Behavior> {
 
         E effect;
         B behavior;
 
-        public static <E extends Effect> Builder<E, ?> of(E effect) {
-            Builder<E, ?> builder = new Builder<>();
-            builder.effect = effect;
-            return builder;
+        public Builder<E, ?> of(E effect) {
+            this.effect = effect;
+            return this;
         }
 
         public <BB extends Behavior> Builder<E, BB> following(BB behavior) {
             @SuppressWarnings("unchecked") Builder<E, BB> cast = (Builder<E, BB>) this;
             if (!effect.getType().isValidBehavior(behavior.getType()))
-                throw new IllegalArgumentException("Illegal behavor for effect");
+                throw new IllegalArgumentException("Illegal behavior for effect");
             cast.behavior = behavior;
             return cast;
         }

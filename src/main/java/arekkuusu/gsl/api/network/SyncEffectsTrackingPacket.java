@@ -2,27 +2,27 @@ package arekkuusu.gsl.api.network;
 
 import arekkuusu.gsl.api.GSLCapabilities;
 import arekkuusu.gsl.api.util.WorldHelper;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.UUID;
 import java.util.function.Supplier;
 
 public class SyncEffectsTrackingPacket {
 
-    public CompoundNBT nbt;
+    public CompoundTag nbt;
     public UUID uuid;
 
-    public static void encoding(SyncEffectsTrackingPacket msg, PacketBuffer buffer) {
-        buffer.writeCompoundTag(msg.nbt);
-        buffer.writeUniqueId(msg.uuid);
+    public static void encoding(SyncEffectsTrackingPacket msg, FriendlyByteBuf buffer) {
+        buffer.writeNbt(msg.nbt);
+        buffer.writeUUID(msg.uuid);
     }
 
-    public static SyncEffectsTrackingPacket decoding(PacketBuffer buffer) {
+    public static SyncEffectsTrackingPacket decoding(FriendlyByteBuf buffer) {
         SyncEffectsTrackingPacket it = new SyncEffectsTrackingPacket();
-        it.nbt = buffer.readCompoundTag();
-        it.uuid = buffer.readUniqueId();
+        it.nbt = buffer.readNbt();
+        it.uuid = buffer.readUUID();
         return it;
     }
 

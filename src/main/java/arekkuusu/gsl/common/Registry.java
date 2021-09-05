@@ -5,7 +5,7 @@ import arekkuusu.gsl.api.GSLRegistries;
 import arekkuusu.gsl.api.registry.BehaviorType;
 import arekkuusu.gsl.api.registry.EffectType;
 import arekkuusu.gsl.api.registry.Skill;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraftforge.registries.RegistryBuilder;

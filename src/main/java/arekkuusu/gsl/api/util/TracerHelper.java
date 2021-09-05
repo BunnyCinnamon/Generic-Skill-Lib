@@ -3,11 +3,11 @@ package arekkuusu.gsl.api.util;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.projectile.ProjectileHelper;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -18,34 +18,34 @@ import java.util.Optional;
 @SuppressWarnings({"Guava", "ConstantConditions"})
 public final class TracerHelper {
 
-    public static Function<Entity, Vector3d> TO_EYE_VEC = (e) -> Objects.requireNonNull(e).getEyePosition(1F);
-    public static Function<Entity, Vector3d> TO_LOOK_VEC = (e) -> Objects.requireNonNull(e).getLook(1F);
+    public static Function<Entity, Vec3> TO_EYE_VEC = (e) -> Objects.requireNonNull(e).getEyePosition(1F);
+    public static Function<Entity, Vec3> TO_LOOK_VEC = (e) -> Objects.requireNonNull(e).getLookAngle();
 
-    public static RayTraceResult getLookedAt(Entity source, double distance, Predicate<Entity> predicate) {
-        Vector3d from = TO_EYE_VEC.apply(source);
-        Vector3d to = from.add(TO_LOOK_VEC.apply(source).mul(distance, distance, distance));
-        RayTraceResult result = getLookedBlock(source, from, to);
-        if(result.getType() != RayTraceResult.Type.MISS) {
-            to = result.getHitVec();
+    public static HitResult getLookedAt(Entity source, double distance, Predicate<Entity> predicate) {
+        Vec3 from = TO_EYE_VEC.apply(source);
+        Vec3 to = from.add(TO_LOOK_VEC.apply(source).multiply(distance, distance, distance));
+        HitResult result = getLookedBlock(source, from, to);
+        if(result.getType() != HitResult.Type.MISS) {
+            to = result.getLocation();
         }
-        RayTraceResult result1 = getLookedEntity(source, from, to, predicate);
-        return result1.getType() == RayTraceResult.Type.MISS ? result : result1;
+        HitResult result1 = getLookedEntity(source, from, to, predicate);
+        return result1.getType() == HitResult.Type.MISS ? result : result1;
     }
 
-    public static BlockRayTraceResult getLookedBlock(Entity source, Vector3d start, Vector3d end) {
-        World world = source.getEntityWorld();
-        RayTraceContext context = new RayTraceContext(start, end, RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, source);
-        return world.rayTraceBlocks(context);
+    public static BlockHitResult getLookedBlock(Entity source, Vec3 start, Vec3 end) {
+        Level world = source.level;
+        ClipContext context = new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, source);
+        return world.clip(context);
     }
 
-    public static EntityRayTraceResult getLookedEntity(Entity source, Vector3d start, Vector3d end, Predicate<Entity> predicate) {
-        World world = source.getEntityWorld();
-        Vector3d difference = end.subtract(start);
+    public static EntityHitResult getLookedEntity(Entity source, Vec3 start, Vec3 end, Predicate<Entity> predicate) {
+        Level world = source.level;
+        Vec3 difference = end.subtract(start);
         double distance = start.distanceTo(end);
-        AxisAlignedBB bb = new AxisAlignedBB(new BlockPos(start))
-                .expand(difference.mul(distance, distance, distance))
-                .grow(1.0D);
-        EntityRayTraceResult result = TracerHelper.rayTraceEntities(world, source, start, end, bb, predicate);
+        AABB bb = new AABB(new BlockPos(start))
+                .expandTowards(difference.multiply(distance, distance, distance))
+                .inflate(1.0D);
+        EntityHitResult result = TracerHelper.rayTraceEntities(world, source, start, end, bb, predicate);
         if (result == null) {
             result = new EntityRayTraceResultEmpty();
         }
@@ -53,19 +53,19 @@ public final class TracerHelper {
     }
 
     public static List<Entity> getInCone(Entity source, double distance, double degrees, Predicate<Entity> predicate) {
-        Vector3d eyesVector = source.getEyePosition(1F);
-        Vector3d lookVector = source.getLook(1F);
-        Vector3d targetVector = eyesVector.add(
+        Vec3 eyesVector = source.getEyePosition(1F);
+        Vec3 lookVector = source.getLookAngle();
+        Vec3 targetVector = eyesVector.add(
                 lookVector.x * distance,
                 lookVector.y * distance,
                 lookVector.z * distance
         );
-        AxisAlignedBB bb = new AxisAlignedBB(
+        AABB bb = new AABB(
                 targetVector.x - distance, targetVector.y - distance, targetVector.z - distance,
                 targetVector.x + distance, targetVector.y + distance, targetVector.z + distance
         );
         List<Entity> entities = Lists.newArrayList();
-        for (Entity entity : source.world.getEntitiesInAABBexcluding(source, bb, predicate)) {
+        for (Entity entity : source.level.getEntities(source, bb, predicate)) {
             if (isInCone(entity, source, degrees)) {
                 entities.add(entity);
             }
@@ -74,13 +74,13 @@ public final class TracerHelper {
     }
 
     public static boolean isInCone(Entity source, Entity target, double fov) {
-        Vector3d positionTarget = target.getEyePosition(1F);
-        Vector3d lookTarget = target.getLookVec().normalize();
-        Vector3d positionAttacker = source.getEyePosition(1F);
+        Vec3 positionTarget = target.getEyePosition(1F);
+        Vec3 lookTarget = target.getLookAngle().normalize();
+        Vec3 positionAttacker = source.getEyePosition(1F);
 
-        Vector3d origin = new Vector3d(0, 0, 0);
-        Vector3d pointA = lookTarget.add(positionTarget).subtract(positionTarget);
-        Vector3d pointB = positionAttacker.subtract(positionTarget);
+        Vec3 origin = new Vec3(0, 0, 0);
+        Vec3 pointA = lookTarget.add(positionTarget).subtract(positionTarget);
+        Vec3 pointB = positionAttacker.subtract(positionTarget);
         double pointADistance = pointA.distanceTo(pointB);
         double pointBDistance = pointB.distanceTo(origin);
 
@@ -95,16 +95,16 @@ public final class TracerHelper {
     }
 
     @Nullable
-    public static EntityRayTraceResult rayTraceEntities(World worldIn, Entity projectile, Vector3d startVec, Vector3d endVec, AxisAlignedBB boundingBox, java.util.function.Predicate<Entity> filter) {
+    public static EntityHitResult rayTraceEntities(Level worldIn, Entity projectile, Vec3 startVec, Vec3 endVec, AABB boundingBox, java.util.function.Predicate<Entity> filter) {
         double d0 = Double.MAX_VALUE;
         Entity entity = null;
-        Vector3d entityVector = null;
+        Vec3 entityVector = null;
 
-        for(Entity entity1 : worldIn.getEntitiesInAABBexcluding(projectile, boundingBox, filter)) {
-            AxisAlignedBB axisalignedbb = entity1.getBoundingBox().grow((double)0.3F);
-            Optional<Vector3d> optional = axisalignedbb.rayTrace(startVec, endVec);
+        for(Entity entity1 : worldIn.getEntities(projectile, boundingBox, filter)) {
+            AABB axisalignedbb = entity1.getBoundingBox().inflate(0.3D);
+            Optional<Vec3> optional = axisalignedbb.clip(startVec, endVec);
             if (optional.isPresent()) {
-                double d1 = startVec.squareDistanceTo(optional.get());
+                double d1 = startVec.distanceToSqr(optional.get());
                 if (d1 < d0) {
                     entity = entity1;
                     entityVector = optional.get();
@@ -113,10 +113,10 @@ public final class TracerHelper {
             }
         }
 
-        return entity == null || entityVector == null ? null : new EntityRayTraceResult(entity, entityVector);
+        return entity == null || entityVector == null ? null : new EntityHitResult(entity, entityVector);
     }
 
-    public static final class EntityRayTraceResultEmpty extends EntityRayTraceResult {
+    public static final class EntityRayTraceResultEmpty extends EntityHitResult {
 
         EntityRayTraceResultEmpty() {
             super(null, null);

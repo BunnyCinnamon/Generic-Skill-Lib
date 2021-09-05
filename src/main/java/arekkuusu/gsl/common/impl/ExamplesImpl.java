@@ -5,7 +5,7 @@ import arekkuusu.gsl.api.registry.EffectType;
 import arekkuusu.gsl.api.registry.Skill;
 import arekkuusu.gsl.common.impl.example.EffectExample;
 import arekkuusu.gsl.common.impl.example.SkillExample;
-import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.fmllegacy.RegistryObject;
 
 public class ExamplesImpl {
 

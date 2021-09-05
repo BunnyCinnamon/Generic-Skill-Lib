@@ -2,23 +2,23 @@ package arekkuusu.gsl.api.network;
 
 import arekkuusu.gsl.GSL;
 import arekkuusu.gsl.api.GSLCapabilities;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
 public class SyncEffectsPacket {
 
-    public CompoundNBT nbt;
+    public CompoundTag nbt;
 
-    public static void encoding(SyncEffectsPacket msg, PacketBuffer buffer) {
-        buffer.writeCompoundTag(msg.nbt);
+    public static void encoding(SyncEffectsPacket msg, FriendlyByteBuf buffer) {
+        buffer.writeNbt(msg.nbt);
     }
 
-    public static SyncEffectsPacket decoding(PacketBuffer buffer) {
+    public static SyncEffectsPacket decoding(FriendlyByteBuf buffer) {
         SyncEffectsPacket it = new SyncEffectsPacket();
-        it.nbt = buffer.readCompoundTag();
+        it.nbt = buffer.readNbt();
         return it;
     }
 

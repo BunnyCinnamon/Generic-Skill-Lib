@@ -1,10 +1,10 @@
 package arekkuusu.gsl.api.util;
 
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.world.entity.player.Player;
 
 public final class XPHelper {
 
-    public static int takeXP(PlayerEntity player, int xp) {
+    public static int takeXP(Player player, int xp) {
         int total = getXPTotal(player);
         int taken = Math.min(xp, total);
         total -= taken;
@@ -12,22 +12,22 @@ public final class XPHelper {
         return taken;
     }
 
-    public static void giveXP(PlayerEntity player, int xp) {
+    public static void giveXP(Player player, int xp) {
         setXP(player, getXPTotal(player) + xp);
     }
 
-    public static void setXP(PlayerEntity player, int xp) {
+    public static void setXP(Player player, int xp) {
         player.experienceLevel = Math.max(getLevelFromXPValue(xp), 0);
-        player.experience = Math.max(getLevelProgressFromXPValue(xp), 0F);
-        player.experienceTotal = xp;
+        player.experienceProgress = Math.max(getLevelProgressFromXPValue(xp), 0F);
+        player.totalExperience = xp;
     }
 
     public static int getXPTotal(int level, double current) {
         return (int) (getXPValueFromLevel(level) + getXPValueToNextLevel(level) * current);
     }
 
-    public static int getXPTotal(PlayerEntity player) {
-        return (int) (getXPValueFromLevel(player.experienceLevel) + (getXPValueToNextLevel(player.experienceLevel) * player.experience));
+    public static int getXPTotal(Player player) {
+        return (int) (getXPValueFromLevel(player.experienceLevel) + (getXPValueToNextLevel(player.experienceLevel) * player.experienceProgress));
     }
 
     public static int getLevelFromXPValue(int value) {

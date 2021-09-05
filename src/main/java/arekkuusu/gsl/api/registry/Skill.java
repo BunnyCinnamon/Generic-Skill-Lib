@@ -1,7 +1,7 @@
 package arekkuusu.gsl.api.registry;
 
 import arekkuusu.gsl.api.registry.data.SerDes;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 
 public abstract class Skill<T extends SerDes> extends ForgeRegistryEntry<Skill<?>> {

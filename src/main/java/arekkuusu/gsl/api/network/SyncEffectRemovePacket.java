@@ -1,12 +1,12 @@
 package arekkuusu.gsl.api.network;
 
-import arekkuusu.gsl.api.GSLRegistries;
 import arekkuusu.gsl.api.GSLCapabilities;
+import arekkuusu.gsl.api.GSLRegistries;
 import arekkuusu.gsl.api.capability.data.Affected;
 import arekkuusu.gsl.api.registry.data.BehaviorContext;
 import arekkuusu.gsl.api.util.WorldHelper;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -16,23 +16,23 @@ public class SyncEffectRemovePacket {
     public Affected affected;
     public UUID uuid;
 
-    public static void encoding(SyncEffectRemovePacket msg, PacketBuffer buffer) {
-        buffer.writeUniqueId(msg.uuid);
-        buffer.writeString(msg.affected.id);
+    public static void encoding(SyncEffectRemovePacket msg, FriendlyByteBuf buffer) {
+        buffer.writeUUID(msg.uuid);
+        buffer.writeUtf(msg.affected.id);
         buffer.writeResourceLocation(msg.affected.behavior.getType().getRegistryName());
-        buffer.writeCompoundTag(msg.affected.behavior.serializeNBT());
-        buffer.writeCompoundTag(msg.affected.behaviorContext.serializeNBT());
+        buffer.writeNbt(msg.affected.behavior.serializeNBT());
+        buffer.writeNbt(msg.affected.behaviorContext.serializeNBT());
     }
 
-    public static SyncEffectRemovePacket decoding(PacketBuffer buffer) {
+    public static SyncEffectRemovePacket decoding(FriendlyByteBuf buffer) {
         SyncEffectRemovePacket it = new SyncEffectRemovePacket();
-        it.uuid = buffer.readUniqueId();
+        it.uuid = buffer.readUUID();
         it.affected = new Affected();
-        it.affected.id = buffer.readString();
+        it.affected.id = buffer.readUtf();
         it.affected.behavior = GSLRegistries.BEHAVIOR_TYPES.getValue(buffer.readResourceLocation()).create();
-        it.affected.behavior.deserializeNBT(buffer.readCompoundTag());
+        it.affected.behavior.deserializeNBT(buffer.readNbt());
         it.affected.behaviorContext = new BehaviorContext();
-        it.affected.behaviorContext.deserializeNBT(buffer.readCompoundTag());
+        it.affected.behaviorContext.deserializeNBT(buffer.readNbt());
         return it;
     }
 

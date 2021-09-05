@@ -1,12 +1,12 @@
 package arekkuusu.gsl.api.util;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.Entity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.server.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.LogicalSidedProvider;
-import net.minecraftforge.fml.common.thread.EffectiveSide;
+import net.minecraftforge.fml.util.thread.EffectiveSide;
+import net.minecraftforge.fmllegacy.LogicalSidedProvider;
 
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
@@ -27,8 +27,8 @@ public final class WorldHelper {
     @Nullable
     public static Entity server(UUID uuid) {
         MinecraftServer server = LogicalSidedProvider.INSTANCE.get(LogicalSide.SERVER);
-        for (ServerWorld world : server.getWorlds()) {
-            Entity entity = world.getEntityByUuid(uuid);
+        for (ServerLevel world : server.getAllLevels()) {
+            Entity entity = world.getEntity(uuid);
             if (entity != null)
                 return entity;
         }
@@ -38,8 +38,8 @@ public final class WorldHelper {
     @Nullable
     public static Entity client(UUID uuid) {
         Minecraft client = LogicalSidedProvider.INSTANCE.get(LogicalSide.CLIENT);
-        for (Entity entity : client.world.getAllEntities()) {
-            if(entity.getUniqueID().equals(uuid))
+        for (Entity entity : client.level.getEntities().getAll()) {
+            if(entity.getUUID().equals(uuid))
                 return entity;
         }
         return null;
@@ -63,7 +63,7 @@ public final class WorldHelper {
 
         public void setReference(T entity) {
             reference = new WeakReference<>(entity);
-            uuid = entity.getUniqueID();
+            uuid = entity.getUUID();
         }
 
         public boolean exists() {

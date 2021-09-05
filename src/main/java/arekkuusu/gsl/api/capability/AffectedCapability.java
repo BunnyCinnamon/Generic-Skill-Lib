@@ -8,16 +8,14 @@ import arekkuusu.gsl.api.registry.data.BehaviorContext;
 import arekkuusu.gsl.api.util.NBTHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -31,10 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class AffectedCapability implements ICapabilitySerializable<CompoundNBT>, Capability.IStorage<AffectedCapability> {
+public class AffectedCapability implements ICapabilitySerializable<CompoundTag> {
 
     public static void init() {
-        CapabilityManager.INSTANCE.register(AffectedCapability.class, new AffectedCapability(), AffectedCapability::new);
         MinecraftForge.EVENT_BUS.register(new Handler());
     }
 
@@ -50,31 +47,29 @@ public class AffectedCapability implements ICapabilitySerializable<CompoundNBT>,
 
     @Nonnull
     @Override
-    public CompoundNBT serializeNBT() {
-        return (CompoundNBT) GSLCapabilities.AFFECTED_ENTITY.getStorage().writeNBT(GSLCapabilities.AFFECTED_ENTITY, this, null);
+    public CompoundTag serializeNBT() {
+        return writeNBT(this);
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT nbt) {
-        GSLCapabilities.AFFECTED_ENTITY.getStorage().readNBT(GSLCapabilities.AFFECTED_ENTITY, this, null, nbt);
+    public void deserializeNBT(CompoundTag nbt) {
+        readNBT(this, nbt);
     }
 
     //** NBT **//
 
-    @Nullable
-    @Override
-    public INBT writeNBT(Capability<AffectedCapability> capability, AffectedCapability instance, Direction side) {
-        CompoundNBT tag = new CompoundNBT();
+    public CompoundTag writeNBT(AffectedCapability instance) {
+        CompoundTag tag = new CompoundTag();
         save(tag, "queueRemove", instance.queueRemove);
         save(tag, "queueAdd", instance.queueAdd);
         save(tag, "active", instance.active.values());
         return tag;
     }
 
-    private void save(CompoundNBT tag, String name, Collection<Affected> collection) {
-        ListNBT list = new ListNBT();
+    private void save(CompoundTag tag, String name, Collection<Affected> collection) {
+        var list = new ListTag();
         for (Affected value : collection) {
-            CompoundNBT nbt = new CompoundNBT();
+            CompoundTag nbt = new CompoundTag();
             NBTHelper.putString(nbt, "id", value.id);
             NBTHelper.setRegistry(nbt, "type", value.behavior.getType());
             NBTHelper.setNBT(nbt, "behavior", value.behavior.serializeNBT());
@@ -84,9 +79,7 @@ public class AffectedCapability implements ICapabilitySerializable<CompoundNBT>,
         tag.put(name, list);
     }
 
-    @Override
-    public void readNBT(Capability<AffectedCapability> capability, AffectedCapability instance, Direction side, INBT nbt) {
-        CompoundNBT tag = (CompoundNBT) nbt;
+    public void readNBT(AffectedCapability instance, CompoundTag tag) {
         instance.queueRemove.clear();
         instance.queueAdd.clear();
         instance.active.clear();
@@ -95,10 +88,10 @@ public class AffectedCapability implements ICapabilitySerializable<CompoundNBT>,
         load(tag, "active", affected -> instance.active.put(affected.id, affected));
     }
 
-    private void load(CompoundNBT tag, String name, Consumer<Affected> consumer) {
-        ListNBT list = NBTHelper.getNBTList(tag, name);
+    private void load(CompoundTag tag, String name, Consumer<Affected> consumer) {
+        var list = NBTHelper.getNBTList(tag, name);
         for (int i = 0; i < list.size(); i++) {
-            CompoundNBT nbt = list.getCompound(i);
+            CompoundTag nbt = list.getCompound(i);
             Affected affected = new Affected();
             affected.id = NBTHelper.getString(nbt, "id");
             affected.behavior = NBTHelper.getRegistry(nbt, "type", BehaviorType.class).create();
@@ -114,7 +107,7 @@ public class AffectedCapability implements ICapabilitySerializable<CompoundNBT>,
         @SubscribeEvent
         public void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
             if (event.getObject() instanceof LivingEntity)
-                event.addCapability(KEY, GSLCapabilities.AFFECTED_ENTITY.getDefaultInstance());
+                event.addCapability(KEY, new AffectedCapability());
         }
 
         @SubscribeEvent

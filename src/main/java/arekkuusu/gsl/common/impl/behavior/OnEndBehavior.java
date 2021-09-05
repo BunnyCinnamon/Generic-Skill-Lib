@@ -3,7 +3,7 @@ package arekkuusu.gsl.common.impl.behavior;
 import arekkuusu.gsl.api.registry.Behavior;
 import arekkuusu.gsl.api.registry.data.BehaviorContext;
 import arekkuusu.gsl.common.impl.DefaultBehaviors;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 
 public class OnEndBehavior extends Behavior {
 
@@ -27,12 +27,12 @@ public class OnEndBehavior extends Behavior {
     }
 
     @Override
-    public void writeNBT(CompoundNBT compound) {
+    public void writeNBT(CompoundTag compound) {
         compound.putInt("countDown", countDown);
     }
 
     @Override
-    public void readNBT(CompoundNBT compound) {
+    public void readNBT(CompoundTag compound) {
         countDown = compound.getInt("countDown");
     }
 }

@@ -1,10 +1,10 @@
 package arekkuusu.gsl.api.registry;
 
 import arekkuusu.gsl.api.registry.data.BehaviorContext;
-import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraftforge.common.util.INBTSerializable;
 
-public abstract class Behavior implements INBTSerializable<CompoundNBT> {
+public abstract class Behavior implements INBTSerializable<CompoundTag> {
 
     private final BehaviorType<?> type;
 
@@ -17,20 +17,20 @@ public abstract class Behavior implements INBTSerializable<CompoundNBT> {
     public abstract boolean isAlive();
 
     @Override
-    public CompoundNBT serializeNBT() {
-        CompoundNBT compound = new CompoundNBT();
+    public CompoundTag serializeNBT() {
+        CompoundTag compound = new CompoundTag();
         writeNBT(compound);
         return compound;
     }
 
     @Override
-    public void deserializeNBT(CompoundNBT compound) {
+    public void deserializeNBT(CompoundTag compound) {
         readNBT(compound);
     }
 
-    public abstract void writeNBT(CompoundNBT compound);
+    public abstract void writeNBT(CompoundTag compound);
 
-    public abstract void readNBT(CompoundNBT compound);
+    public abstract void readNBT(CompoundTag compound);
 
     public BehaviorType<?> getType() {
         return this.type;

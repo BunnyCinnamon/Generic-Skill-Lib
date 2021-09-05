@@ -2,13 +2,8 @@ package arekkuusu.gsl.api;
 
 import arekkuusu.gsl.api.capability.AffectedCapability;
 import arekkuusu.gsl.api.capability.SkilledCapability;
-import arekkuusu.gsl.api.capability.data.Affected;
-import arekkuusu.gsl.api.capability.data.Skilled;
-import arekkuusu.gsl.api.registry.Skill;
-import arekkuusu.gsl.api.registry.data.SerDes;
 import arekkuusu.gsl.api.util.EmptyImpl;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.util.LazyOptional;
