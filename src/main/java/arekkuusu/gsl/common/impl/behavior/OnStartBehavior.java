@@ -14,7 +14,7 @@ public class OnStartBehavior extends Behavior {
     private boolean alive = true;
 
     @Override
-    public void update(BehaviorContext context) {
+    public void execute(BehaviorContext context) {
         if (alive) {
             context.effect.apply();
             alive = false;
@@ -22,7 +22,7 @@ public class OnStartBehavior extends Behavior {
     }
 
     @Override
-    public boolean isAlive() {
+    public boolean isExecuting() {
         return alive;
     }
 

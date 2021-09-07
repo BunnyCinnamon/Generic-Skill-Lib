@@ -1,4 +1,4 @@
-package arekkuusu.gsl.api.util;
+package arekkuusu.gsl.api.helper;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

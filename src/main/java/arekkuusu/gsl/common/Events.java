@@ -53,7 +53,7 @@ public class Events {
                     while (it.hasNext()) {
                         Affected affected = it.next();
                         c.active.remove(affected.id);
-                        affected.behaviorContext.effect.remove();
+                        affected.behaviorContext.effect.invalidate();
                         it.remove();
                     }
                 }
@@ -67,8 +67,8 @@ public class Events {
                     }
                 }
                 for (Affected affected : c.active.values()) {
-                    if (affected.behavior.isAlive()) {
-                        affected.behavior.update(affected.behaviorContext);
+                    if (affected.behavior.isExecuting()) {
+                        affected.behavior.execute(affected.behaviorContext);
                     } else {
                         c.queueRemove.add(affected);
                     }

@@ -9,22 +9,22 @@ import net.minecraftforge.fmllegacy.RegistryObject;
 public class DefaultBehaviors {
 
     public static final RegistryObject<BehaviorType<BehaviorExample>> EXAMPLE = GSL.BEHAVIOR_TYPE_DEFERRED_REGISTER.register(
-            "example", () -> BehaviorType.Builder.create(BehaviorExample::new).build()
+            "example", () -> BehaviorType.builder().factory(BehaviorExample::new).build()
     );
     public static final RegistryObject<BehaviorType<OnEndBehavior>> ON_END = GSL.BEHAVIOR_TYPE_DEFERRED_REGISTER.register(
-            "on_end", () -> BehaviorType.Builder.create(OnEndBehavior::new).build()
+            "on_end", () -> BehaviorType.builder().factory(OnEndBehavior::new).build()
     );
     public static final RegistryObject<BehaviorType<OnStartBehavior>> ON_START = GSL.BEHAVIOR_TYPE_DEFERRED_REGISTER.register(
-            "on_start", () -> BehaviorType.Builder.create(OnStartBehavior::new).build()
+            "on_start", () -> BehaviorType.builder().factory(OnStartBehavior::new).build()
     );
     public static final RegistryObject<BehaviorType<DefiniteBehavior>> DEFINITE = GSL.BEHAVIOR_TYPE_DEFERRED_REGISTER.register(
-            "definite", () -> BehaviorType.Builder.create(DefiniteBehavior::new).build()
+            "definite", () -> BehaviorType.builder().factory(DefiniteBehavior::new).build()
     );
     public static final RegistryObject<BehaviorType<IndefiniteBehavior>> INDEFINITE = GSL.BEHAVIOR_TYPE_DEFERRED_REGISTER.register(
-            "indefinite", () -> BehaviorType.Builder.create(IndefiniteBehavior::new).build()
+            "indefinite", () -> BehaviorType.builder().factory(IndefiniteBehavior::new).build()
     );
     public static final RegistryObject<BehaviorType<WhileEntityLivesBehavior>> WHILE_ENTITY_LIVES = GSL.BEHAVIOR_TYPE_DEFERRED_REGISTER.register(
-            "while_entity_lives", () -> BehaviorType.Builder.create(WhileEntityLivesBehavior::new).build()
+            "while_entity_lives", () -> BehaviorType.builder().factory(WhileEntityLivesBehavior::new).build()
     );
 
     public static void init() {

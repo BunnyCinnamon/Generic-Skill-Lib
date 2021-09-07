@@ -1,7 +1,7 @@
 package arekkuusu.gsl.api.network;
 
 import arekkuusu.gsl.api.GSLCapabilities;
-import arekkuusu.gsl.api.util.WorldHelper;
+import arekkuusu.gsl.api.helper.WorldHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;

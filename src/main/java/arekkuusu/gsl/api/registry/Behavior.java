@@ -12,9 +12,9 @@ public abstract class Behavior implements INBTSerializable<CompoundTag> {
         this.type = type;
     }
 
-    public abstract void update(BehaviorContext context);
+    public abstract void execute(BehaviorContext context);
 
-    public abstract boolean isAlive();
+    public abstract boolean isExecuting();
 
     @Override
     public CompoundTag serializeNBT() {

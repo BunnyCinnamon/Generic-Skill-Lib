@@ -15,13 +15,13 @@ public class DefiniteBehavior extends Behavior {
     int count;
 
     @Override
-    public void update(BehaviorContext context) {
+    public void execute(BehaviorContext context) {
         context.effect.apply();
         count++;
     }
 
     @Override
-    public boolean isAlive() {
+    public boolean isExecuting() {
         return count <= duration;
     }
 

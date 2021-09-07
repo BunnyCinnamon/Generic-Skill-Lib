@@ -14,7 +14,7 @@ public class OnEndBehavior extends Behavior {
     public int countDown;
 
     @Override
-    public void update(BehaviorContext context) {
+    public void execute(BehaviorContext context) {
         if(countDown == 0) {
             context.effect.apply();
         }
@@ -22,7 +22,7 @@ public class OnEndBehavior extends Behavior {
     }
 
     @Override
-    public boolean isAlive() {
+    public boolean isExecuting() {
         return countDown >= 0;
     }
 

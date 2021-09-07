@@ -2,7 +2,7 @@ package arekkuusu.gsl.api.registry;
 
 import net.minecraftforge.registries.ForgeRegistryEntry;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -14,27 +14,29 @@ public final class BehaviorType<T extends Behavior> extends ForgeRegistryEntry<B
         this.factory = factory;
     }
 
-    @Nullable
+    @Nonnull
     public T with(Consumer<T> consumer) {
         T t = create();
         consumer.accept(t);
         return t;
     }
 
-    @Nullable
+    @Nonnull
     public T create() {
         return this.factory.get();
     }
 
+    public static Builder<?> builder() {
+        return new Builder<>();
+    }
+
     public static final class Builder<T extends Behavior> {
-        private final Supplier<? extends T> factory;
 
-        private Builder(Supplier<? extends T> factoryIn) {
-            this.factory = factoryIn;
-        }
+        private Supplier<? extends T> factory;
 
-        public static <T extends Behavior> BehaviorType.Builder<T> create(Supplier<? extends T> factoryIn) {
-            return new BehaviorType.Builder<>(factoryIn);
+        public <TT extends Behavior> Builder<TT> factory(Supplier<TT> factory) {
+            this.factory = (Supplier<T>) factory;
+            return (Builder<TT>) this;
         }
 
         public BehaviorType<T> build() {

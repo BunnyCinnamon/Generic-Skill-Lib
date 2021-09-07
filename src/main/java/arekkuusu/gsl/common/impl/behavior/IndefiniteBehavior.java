@@ -12,12 +12,12 @@ public class IndefiniteBehavior extends Behavior {
     }
 
     @Override
-    public void update(BehaviorContext context) {
+    public void execute(BehaviorContext context) {
         context.effect.apply();
     }
 
     @Override
-    public boolean isAlive() {
+    public boolean isExecuting() {
         return true;
     }
 

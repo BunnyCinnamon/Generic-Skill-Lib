@@ -1,4 +1,4 @@
-package arekkuusu.gsl.api.util;
+package arekkuusu.gsl.api.helper;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;

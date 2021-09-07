@@ -5,7 +5,7 @@ import arekkuusu.gsl.api.GSLCapabilities;
 import arekkuusu.gsl.api.capability.data.Affected;
 import arekkuusu.gsl.api.registry.BehaviorType;
 import arekkuusu.gsl.api.registry.data.BehaviorContext;
-import arekkuusu.gsl.api.util.NBTHelper;
+import arekkuusu.gsl.api.helper.NBTHelper;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import net.minecraft.core.Direction;
@@ -42,7 +42,7 @@ public class AffectedCapability implements ICapabilitySerializable<CompoundTag> 
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        return GSLCapabilities.AFFECTED_ENTITY.orEmpty(cap, LazyOptional.of(() -> this));
+        return GSLCapabilities.AFFECTED.orEmpty(cap, LazyOptional.of(() -> this));
     }
 
     @Nonnull
@@ -112,8 +112,8 @@ public class AffectedCapability implements ICapabilitySerializable<CompoundTag> 
 
         @SubscribeEvent
         public void clonePlayer(PlayerEvent.Clone event) {
-            event.getPlayer().getCapability(GSLCapabilities.AFFECTED_ENTITY, null).ifPresent(first -> {
-                event.getOriginal().getCapability(GSLCapabilities.AFFECTED_ENTITY, null).ifPresent(second -> {
+            event.getPlayer().getCapability(GSLCapabilities.AFFECTED, null).ifPresent(first -> {
+                event.getOriginal().getCapability(GSLCapabilities.AFFECTED, null).ifPresent(second -> {
                     first.deserializeNBT(second.serializeNBT());
                 });
             });

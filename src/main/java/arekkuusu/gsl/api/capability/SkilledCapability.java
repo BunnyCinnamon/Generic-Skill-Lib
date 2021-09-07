@@ -4,7 +4,7 @@ import arekkuusu.gsl.GSL;
 import arekkuusu.gsl.api.GSLCapabilities;
 import arekkuusu.gsl.api.capability.data.Skilled;
 import arekkuusu.gsl.api.registry.Skill;
-import arekkuusu.gsl.api.util.NBTHelper;
+import arekkuusu.gsl.api.helper.NBTHelper;
 import com.google.common.collect.Maps;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -48,7 +48,7 @@ public class SkilledCapability implements ICapabilitySerializable<CompoundTag> {
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        return GSLCapabilities.SKILLED_ENTITY.orEmpty(cap, LazyOptional.of(() -> this));
+        return GSLCapabilities.SKILLED.orEmpty(cap, LazyOptional.of(() -> this));
     }
 
     @Override
@@ -109,8 +109,8 @@ public class SkilledCapability implements ICapabilitySerializable<CompoundTag> {
 
         @SubscribeEvent
         public void clonePlayer(PlayerEvent.Clone event) {
-            event.getPlayer().getCapability(GSLCapabilities.SKILLED_ENTITY, null).ifPresent(first -> {
-                event.getOriginal().getCapability(GSLCapabilities.SKILLED_ENTITY, null).ifPresent(second -> {
+            event.getPlayer().getCapability(GSLCapabilities.SKILLED, null).ifPresent(first -> {
+                event.getOriginal().getCapability(GSLCapabilities.SKILLED, null).ifPresent(second -> {
                     first.deserializeNBT(second.serializeNBT());
                 });
             });

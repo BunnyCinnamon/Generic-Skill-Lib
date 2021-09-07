@@ -4,7 +4,7 @@ import arekkuusu.gsl.api.GSLCapabilities;
 import arekkuusu.gsl.api.GSLRegistries;
 import arekkuusu.gsl.api.capability.data.Affected;
 import arekkuusu.gsl.api.registry.data.BehaviorContext;
-import arekkuusu.gsl.api.util.WorldHelper;
+import arekkuusu.gsl.api.helper.WorldHelper;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
 

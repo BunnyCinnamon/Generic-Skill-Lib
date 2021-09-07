@@ -2,8 +2,8 @@ package arekkuusu.gsl.api.network;
 
 import arekkuusu.gsl.api.GSLRegistries;
 import arekkuusu.gsl.api.registry.Skill;
-import arekkuusu.gsl.api.util.GSLHelper;
-import arekkuusu.gsl.api.util.WorldHelper;
+import arekkuusu.gsl.api.helper.GSLHelper;
+import arekkuusu.gsl.api.helper.WorldHelper;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fmllegacy.network.NetworkEvent;
 

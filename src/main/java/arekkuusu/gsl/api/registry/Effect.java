@@ -11,7 +11,7 @@ public abstract class Effect implements INBTSerializable<CompoundTag> {
         this.type = type;
     }
 
-    public void remove() {}
+    public void invalidate() {}
     public void validate() {}
     public abstract void apply();
 

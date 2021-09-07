@@ -2,7 +2,7 @@ package arekkuusu.gsl.api.registry.data;
 
 import arekkuusu.gsl.api.registry.Effect;
 import arekkuusu.gsl.api.registry.EffectType;
-import arekkuusu.gsl.api.util.NBTHelper;
+import arekkuusu.gsl.api.helper.NBTHelper;
 import net.minecraft.nbt.CompoundTag;
 
 public class BehaviorContext extends SerDes {
@@ -14,6 +14,10 @@ public class BehaviorContext extends SerDes {
     }
 
     public BehaviorContext(){}
+
+    public void touch() {
+        this.effect.apply();
+    }
 
     @Override
     public void writeNBT(CompoundTag compound) {

@@ -1,4 +1,4 @@
-package arekkuusu.gsl.api.util;
+package arekkuusu.gsl.api.helper;
 
 import arekkuusu.gsl.api.GSLCapabilities;
 import arekkuusu.gsl.api.capability.data.Affected;
@@ -7,11 +7,21 @@ import arekkuusu.gsl.api.registry.Effect;
 import arekkuusu.gsl.api.registry.Skill;
 import arekkuusu.gsl.api.registry.data.SerDes;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 
 public final class GSLHelper {
 
     public static <T extends SerDes> void triggerSkillOn(LivingEntity entity, Skill<T> skill) {
         GSLCapabilities.skill(entity).ifPresent(c -> {
+            Skilled skilled = c.skills.get(skill);
+            if (skilled != null)
+                //noinspection unchecked
+                skill.use(entity, (T) skilled.context);
+        });
+    }
+
+    public static <T extends SerDes> void triggerSkillOn(ItemStack itemStack, LivingEntity entity, Skill<T> skill) {
+        GSLCapabilities.skill(itemStack).ifPresent(c -> {
             Skilled skilled = c.skills.get(skill);
             if (skilled != null)
                 //noinspection unchecked

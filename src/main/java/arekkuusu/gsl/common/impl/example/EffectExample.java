@@ -1,7 +1,7 @@
 package arekkuusu.gsl.common.impl.example;
 
 import arekkuusu.gsl.api.registry.Effect;
-import arekkuusu.gsl.api.util.WorldHelper;
+import arekkuusu.gsl.api.helper.WorldHelper;
 import arekkuusu.gsl.common.impl.ExamplesImpl;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.TextComponent;
