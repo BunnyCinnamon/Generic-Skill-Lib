@@ -12,9 +12,11 @@ import arekkuusu.gsl.client.render.ModRenders;
 import arekkuusu.gsl.common.Registry;
 import arekkuusu.gsl.common.ServerProxy;
 import arekkuusu.gsl.common.impl.DefaultBehaviors;
+import arekkuusu.gsl.common.impl.DefaultEntities;
 import arekkuusu.gsl.common.impl.ExamplesImpl;
 import arekkuusu.gsl.common.network.PacketHandler;
 import arekkuusu.gsl.common.proxy.IProxy;
+import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -29,6 +31,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fmlserverevents.FMLServerStartingEvent;
 import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,6 +41,7 @@ public class GSL {
     public static final DeferredRegister<Skill<? extends SerDes>> SKILL_DEFERRED_REGISTER = DeferredRegister.create(Skill.getType(), GSL.ID);
     public static final DeferredRegister<EffectType<?>> EFFECT_TYPE_DEFERRED_REGISTER = DeferredRegister.create(EffectType.getType(), GSL.ID);
     public static final DeferredRegister<BehaviorType<?>> BEHAVIOR_TYPE_DEFERRED_REGISTER = DeferredRegister.create(BehaviorType.getType(), GSL.ID);
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPE_DEFERRED_REGISTER = DeferredRegister.create(ForgeRegistries.ENTITIES, GSL.ID);
 
     //Useful names
     public static final String ID = "genericskilllib";
@@ -57,6 +61,7 @@ public class GSL {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         ExamplesImpl.init();
         DefaultBehaviors.init();
+        DefaultEntities.init();
         modBus.addListener(this::setup);
         modBus.addListener(this::setupClient);
         modBus.addListener(this::setupRegistry);

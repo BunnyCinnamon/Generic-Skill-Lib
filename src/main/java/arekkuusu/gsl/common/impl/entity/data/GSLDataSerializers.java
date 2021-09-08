@@ -1,9 +1,13 @@
 package arekkuusu.gsl.common.impl.entity.data;
 
+import arekkuusu.gsl.api.GSLRegistries;
+import arekkuusu.gsl.common.impl.entity.Strategic;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -71,19 +75,36 @@ public final class GSLDataSerializers {
         }
     };
 
-    public static final EntityDataSerializer<Strategy> STRATEGY = new EntityDataSerializer<Strategy>() {
+    public static final EntityDataSerializer<Strategy<Strategic>> STRATEGY = new EntityDataSerializer<>() {
         @Override
         public void write(FriendlyByteBuf pBuffer, Strategy pValue) {
             pBuffer.writeInt(pValue.getId());
         }
 
         @Override
-        public Strategy read(FriendlyByteBuf pBuffer) {
-            return GSLStrategyInstances.ENTRIES.get(pBuffer.readInt());
+        public Strategy<Strategic> read(FriendlyByteBuf pBuffer) {
+            return (Strategy<Strategic>) GSLStrategyInstances.ENTRIES.get(pBuffer.readInt());
         }
 
         @Override
-        public Strategy copy(Strategy pValue) {
+        public Strategy<Strategic> copy(Strategy<Strategic> pValue) {
+            return pValue;
+        }
+    };
+
+    public static final EntityDataSerializer<EntityType<?>> ENTITY_TYPE = new EntityDataSerializer<>() {
+        @Override
+        public void write(FriendlyByteBuf pBuffer, EntityType<?> pValue) {
+            pBuffer.writeUtf(pValue.getRegistryName().toString());
+        }
+
+        @Override
+        public EntityType<?> read(FriendlyByteBuf pBuffer) {
+            return GSLRegistries.ENTITY_TYPES.getValue(new ResourceLocation(pBuffer.readUtf()));
+        }
+
+        @Override
+        public EntityType<?> copy(EntityType<?> pValue) {
             return pValue;
         }
     };
@@ -92,5 +113,6 @@ public final class GSLDataSerializers {
         EntityDataSerializers.registerSerializer(BLOCK_POS_ARRAY);
         EntityDataSerializers.registerSerializer(BLOCK_STATE_ARRAY);
         EntityDataSerializers.registerSerializer(STRATEGY);
+        EntityDataSerializers.registerSerializer(ENTITY_TYPE);
     }
 }

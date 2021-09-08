@@ -1,16 +1,16 @@
 package arekkuusu.gsl.common.impl.behavior;
 
-import arekkuusu.gsl.api.registry.Behavior;
-import arekkuusu.gsl.api.registry.data.BehaviorContext;
 import arekkuusu.gsl.api.helper.WorldHelper;
-import arekkuusu.gsl.common.impl.DefaultBehaviors;
+import arekkuusu.gsl.api.registry.Behavior;
+import arekkuusu.gsl.api.registry.BehaviorType;
+import arekkuusu.gsl.api.registry.data.BehaviorContext;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 
 public class WhileEntityLivesBehavior extends Behavior {
 
-    public WhileEntityLivesBehavior() {
-        super(DefaultBehaviors.EXAMPLE.get());
+    public WhileEntityLivesBehavior(BehaviorType<? extends Behavior> behavior) {
+        super(behavior);
     }
 
     public WorldHelper.WeakWorldReference<Player> user;

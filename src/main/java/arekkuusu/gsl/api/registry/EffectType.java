@@ -4,17 +4,15 @@ import com.google.common.collect.ImmutableSet;
 import net.minecraftforge.registries.ForgeRegistryEntry;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public final class EffectType<T extends Effect> extends ForgeRegistryEntry<EffectType<?>> {
 
-    private final Supplier<? extends T> factory;
+    private final EffectFactory<T> factory;
     private final Set<BehaviorType<?>> behaviors;
 
-    public EffectType(Supplier<? extends T> factory, Set<BehaviorType<?>> behaviors) {
+    public EffectType(EffectFactory<T> factory, Set<BehaviorType<?>> behaviors) {
         this.factory = factory;
         this.behaviors = behaviors;
     }
@@ -32,7 +30,7 @@ public final class EffectType<T extends Effect> extends ForgeRegistryEntry<Effec
 
     @Nonnull
     public T create() {
-        return this.factory.get();
+        return this.factory.create(this);
     }
 
     public static Builder<?> builder() {
@@ -41,11 +39,11 @@ public final class EffectType<T extends Effect> extends ForgeRegistryEntry<Effec
 
     public static final class Builder<T extends Effect> {
 
-        private Supplier<T> factory;
+        private EffectFactory<T> factory;
         private BehaviorType<?>[] behaviors;
 
-        public <TT extends Effect> Builder<TT> factory(Supplier<? extends TT> factory) {
-            this.factory = (Supplier<T>) factory;
+        public <TT extends Effect> Builder<TT> factory(EffectFactory<TT> factory) {
+            this.factory = (EffectFactory<T>) factory;
             return (Builder<TT>) this;
         }
 
@@ -57,6 +55,10 @@ public final class EffectType<T extends Effect> extends ForgeRegistryEntry<Effec
         public EffectType<T> build() {
             return new EffectType<>(this.factory, ImmutableSet.copyOf(this.behaviors));
         }
+    }
+
+    public interface EffectFactory<T extends Effect> {
+        T create(EffectType<T> effectType);
     }
 
     public static Class<EffectType<?>> getType() {

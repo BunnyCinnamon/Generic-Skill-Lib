@@ -189,7 +189,7 @@ public final class NBTHelper {
         return new ResourceLocation(compound.getString(tag));
     }
 
-    public static <T extends Enum<T> & StringRepresentable> void setEnum(CompoundTag compound, T t, String tag) {
+    public static <T extends Enum<T> & StringRepresentable> void setEnum(CompoundTag compound, String tag, T t) {
         compound.putString(tag, t.getSerializedName());
     }
 

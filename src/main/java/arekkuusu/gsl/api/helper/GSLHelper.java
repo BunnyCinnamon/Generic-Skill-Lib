@@ -1,6 +1,7 @@
 package arekkuusu.gsl.api.helper;
 
 import arekkuusu.gsl.api.GSLCapabilities;
+import arekkuusu.gsl.api.GSLChannel;
 import arekkuusu.gsl.api.capability.data.Affected;
 import arekkuusu.gsl.api.capability.data.Skilled;
 import arekkuusu.gsl.api.registry.Effect;
@@ -42,10 +43,16 @@ public final class GSLHelper {
     }
 
     public static void applyEffectOn(LivingEntity entity, Affected affected) {
+        if(!entity.level.isClientSide()) {
+            GSLChannel.sendEffectAddSync(entity, affected);
+        }
         GSLCapabilities.effect(entity).filter(c -> c.queueAdd.add(affected));
     }
 
     public static void unapplyEffectOn(LivingEntity entity, Affected affected) {
+        if(!entity.level.isClientSide()) {
+            GSLChannel.sendEffectRemoveSync(entity, affected);
+        }
         GSLCapabilities.effect(entity).filter(c -> c.queueRemove.add(affected));
     }
 

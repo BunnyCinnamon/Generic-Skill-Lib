@@ -1,14 +1,14 @@
 package arekkuusu.gsl.common.impl.behavior;
 
 import arekkuusu.gsl.api.registry.Behavior;
+import arekkuusu.gsl.api.registry.BehaviorType;
 import arekkuusu.gsl.api.registry.data.BehaviorContext;
-import arekkuusu.gsl.common.impl.DefaultBehaviors;
 import net.minecraft.nbt.CompoundTag;
 
 public class OnEndBehavior extends Behavior {
 
-    public OnEndBehavior() {
-        super(DefaultBehaviors.EXAMPLE.get());
+    public OnEndBehavior(BehaviorType<? extends Behavior> behavior) {
+        super(behavior);
     }
 
     public int countDown;

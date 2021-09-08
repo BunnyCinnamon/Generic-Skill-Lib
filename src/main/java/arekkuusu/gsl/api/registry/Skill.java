@@ -12,7 +12,7 @@ public abstract class Skill<T extends SerDes> extends ForgeRegistryEntry<Skill<?
         this.properties = properties;
     }
 
-    public abstract void use(LivingEntity user, T context);
+    public abstract void use(LivingEntity owner, T context);
 
     public abstract T create();
 

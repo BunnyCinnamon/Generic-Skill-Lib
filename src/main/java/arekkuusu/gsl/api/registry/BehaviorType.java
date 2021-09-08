@@ -4,13 +4,12 @@ import net.minecraftforge.registries.ForgeRegistryEntry;
 
 import javax.annotation.Nonnull;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 public final class BehaviorType<T extends Behavior> extends ForgeRegistryEntry<BehaviorType<?>> {
 
-    private final Supplier<? extends T> factory;
+    private final BehaviorFactory<T> factory;
 
-    public BehaviorType(Supplier<? extends T> factory) {
+    public BehaviorType(BehaviorFactory<T> factory) {
         this.factory = factory;
     }
 
@@ -23,7 +22,7 @@ public final class BehaviorType<T extends Behavior> extends ForgeRegistryEntry<B
 
     @Nonnull
     public T create() {
-        return this.factory.get();
+        return this.factory.create(this);
     }
 
     public static Builder<?> builder() {
@@ -32,16 +31,20 @@ public final class BehaviorType<T extends Behavior> extends ForgeRegistryEntry<B
 
     public static final class Builder<T extends Behavior> {
 
-        private Supplier<? extends T> factory;
+        private BehaviorFactory<T> factory;
 
-        public <TT extends Behavior> Builder<TT> factory(Supplier<TT> factory) {
-            this.factory = (Supplier<T>) factory;
+        public <TT extends Behavior> Builder<TT> factory(BehaviorFactory<TT> factory) {
+            this.factory = (BehaviorFactory<T>) factory;
             return (Builder<TT>) this;
         }
 
         public BehaviorType<T> build() {
-            return new BehaviorType<>(this.factory);
+            return new BehaviorType<T>(this.factory);
         }
+    }
+
+    public interface BehaviorFactory<T extends Behavior> {
+        T create(BehaviorType<T> behaviorType);
     }
 
     public static Class<BehaviorType<?>> getType() {

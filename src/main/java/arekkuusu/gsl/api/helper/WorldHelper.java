@@ -14,6 +14,7 @@ import java.util.UUID;
 
 public final class WorldHelper {
 
+    @Nullable
     @SuppressWarnings("unchecked")
     public static <E extends Entity> E getEntityByUUID(UUID uuid) {
         LogicalSide side = EffectiveSide.get();

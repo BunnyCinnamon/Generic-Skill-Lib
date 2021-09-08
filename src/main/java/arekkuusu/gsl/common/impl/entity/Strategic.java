@@ -2,6 +2,8 @@ package arekkuusu.gsl.common.impl.entity;
 
 import arekkuusu.gsl.api.GSLRegistries;
 import arekkuusu.gsl.api.capability.data.Affected;
+import arekkuusu.gsl.api.helper.NBTHelper;
+import arekkuusu.gsl.api.helper.TeamHelper;
 import arekkuusu.gsl.api.registry.data.BehaviorContext;
 import arekkuusu.gsl.common.impl.entity.data.GSLDataSerializers;
 import arekkuusu.gsl.common.impl.entity.data.GSLStrategyInstances;
@@ -25,6 +27,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.PushReaction;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,16 +36,18 @@ public class Strategic extends Entity {
 
     private static final EntityDataAccessor<Float> DATA_WIDTH = SynchedEntityData.defineId(Strategic.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_HEIGHT = SynchedEntityData.defineId(Strategic.class, EntityDataSerializers.FLOAT);
-    private static final EntityDataAccessor<Strategy> DATA_STRATEGY = SynchedEntityData.defineId(Strategic.class, GSLDataSerializers.STRATEGY);
+    private static final EntityDataAccessor<Integer> DATA_DURATION = SynchedEntityData.defineId(Strategic.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_WAIT_TIME = SynchedEntityData.defineId(Strategic.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Strategy<Strategic>> DATA_STRATEGY = SynchedEntityData.defineId(Strategic.class, GSLDataSerializers.STRATEGY);
     private static final int TIME_BETWEEN_APPLICATIONS = 5;
 
     private final Map<Entity, Integer> victims = Maps.newHashMap();
     private final List<Affected> effects = Lists.newArrayList();
+    private TeamHelper.TeamSelector teamSelector = TeamHelper.TeamSelector.ANY;
     @Nullable private LivingEntity owner;
     @Nullable private UUID ownerUUID;
-    private int duration = 600;
 
-    public Strategic(EntityType<?> pEntityType, Level pLevel) {
+    public Strategic(EntityType<? extends Strategic> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
     }
 
@@ -50,13 +55,15 @@ public class Strategic extends Entity {
     protected void defineSynchedData() {
         this.getEntityData().define(DATA_WIDTH, 0.5F);
         this.getEntityData().define(DATA_HEIGHT, 0.5F);
+        this.getEntityData().define(DATA_DURATION, 600);
+        this.getEntityData().define(DATA_WAIT_TIME, 10);
         this.getEntityData().define(DATA_STRATEGY, GSLStrategyInstances.NO_IMPLEMENT);
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (this.tickCount >= this.duration) {
+        if (this.tickCount >= this.getWaitTime() + this.getDuration()) {
             this.discard();
             return;
         }
@@ -73,6 +80,22 @@ public class Strategic extends Entity {
         this.effects.add(affected);
     }
 
+    public void addAllEffect(Collection<Affected> affected) {
+        this.effects.addAll(affected);
+    }
+
+    public void setDuration(int duration) {
+        if (!this.level.isClientSide) {
+            this.getEntityData().set(DATA_DURATION, Mth.clamp(duration, 0, 20));
+        }
+    }
+
+    public void setWaitTime(int waitTime) {
+        if (!this.level.isClientSide) {
+            this.getEntityData().set(DATA_WAIT_TIME, Mth.clamp(waitTime, 0, 10));
+        }
+    }
+
     public void setWidth(float pWidth) {
         if (!this.level.isClientSide) {
             this.getEntityData().set(DATA_WIDTH, Mth.clamp(pWidth, 0.0F, 32.0F));
@@ -83,6 +106,10 @@ public class Strategic extends Entity {
         if (!this.level.isClientSide) {
             this.getEntityData().set(DATA_HEIGHT, Mth.clamp(pHeight, 0.0F, 32.0F));
         }
+    }
+
+    public void setTeamSelector(TeamHelper.TeamSelector teamSelector) {
+        this.teamSelector = teamSelector;
     }
 
     public void setStrategy(Strategy strategy) {
@@ -97,6 +124,14 @@ public class Strategic extends Entity {
         double d2 = this.getZ();
         super.refreshDimensions();
         this.setPos(d0, d1, d2);
+    }
+
+    public int getDuration() {
+        return this.getEntityData().get(DATA_DURATION);
+    }
+
+    public int getWaitTime() {
+        return this.getEntityData().get(DATA_WAIT_TIME);
     }
 
     public Map<Entity, Integer> getVictims() {
@@ -115,7 +150,11 @@ public class Strategic extends Entity {
         return this.getEntityData().get(DATA_HEIGHT);
     }
 
-    public Strategy getStrategy() {
+    public TeamHelper.TeamSelector getTeamSelector() {
+        return teamSelector;
+    }
+
+    public Strategy<Strategic> getStrategy() {
         return this.getEntityData().get(DATA_STRATEGY);
     }
 
@@ -140,9 +179,11 @@ public class Strategic extends Entity {
     @Override
     protected void readAdditionalSaveData(CompoundTag pCompound) {
         this.tickCount = pCompound.getInt("Age");
-        this.duration = pCompound.getInt("Duration");
+        this.setDuration(pCompound.getInt("Duration"));
+        this.setWaitTime(pCompound.getInt("WaitTime"));
         this.setWidth(pCompound.getFloat("Width"));
         this.setHeight(pCompound.getFloat("Height"));
+        this.setTeamSelector(NBTHelper.getEnum(TeamHelper.TeamSelector.class, pCompound, "TeamSelector"));
         this.setStrategy(GSLStrategyInstances.ENTRIES.get(pCompound.getInt("Strategy")));
         if (pCompound.hasUUID("Owner")) {
             this.ownerUUID = pCompound.getUUID("Owner");
@@ -155,11 +196,11 @@ public class Strategic extends Entity {
             for(int i = 0; i < listtag.size(); ++i) {
                 CompoundTag tag = listtag.getCompound(i);
                 Affected affected = new Affected();
-                affected.id = tag.getString("id");
-                affected.behavior = GSLRegistries.BEHAVIOR_TYPES.getValue(new ResourceLocation(tag.getString("resource"))).create();
-                affected.behavior.deserializeNBT(tag.getCompound("behavior"));
+                affected.id = tag.getString("Id");
+                affected.behavior = GSLRegistries.BEHAVIOR_TYPES.getValue(new ResourceLocation(tag.getString("Resource"))).create();
+                affected.behavior.deserializeNBT(tag.getCompound("Behavior"));
                 affected.behaviorContext = new BehaviorContext();
-                affected.behaviorContext.deserializeNBT(tag.getCompound("behaviorContext"));
+                affected.behaviorContext.deserializeNBT(tag.getCompound("BehaviorContext"));
                 this.addEffect(affected);
             }
         }
@@ -168,9 +209,11 @@ public class Strategic extends Entity {
     @Override
     protected void addAdditionalSaveData(CompoundTag pCompound) {
         pCompound.putInt("Age", this.tickCount);
-        pCompound.putInt("Duration", this.duration);
+        pCompound.putInt("Duration", this.getDuration());
+        pCompound.putInt("WaitTime", this.getWaitTime());
         pCompound.putFloat("Width", this.getWidth());
         pCompound.putFloat("Height", this.getHeight());
+        NBTHelper.setEnum(pCompound, "TeamSelector", this.getTeamSelector());
         pCompound.putInt("Strategy", this.getStrategy().getId());
         if (this.ownerUUID != null) {
             pCompound.putUUID("Owner", this.ownerUUID);
@@ -181,10 +224,10 @@ public class Strategic extends Entity {
 
             for(Affected affected : this.effects) {
                 CompoundTag tag = new CompoundTag();
-                tag.putString("id", affected.id);
-                tag.putString("resource", affected.behavior.getType().getRegistryName().toString());
-                tag.put("behavior", affected.behavior.serializeNBT());
-                tag.put("behaviorContext", affected.behaviorContext.serializeNBT());
+                tag.putString("Id", affected.id);
+                tag.putString("Resource", affected.behavior.getType().getRegistryName().toString());
+                tag.put("Behavior", affected.behavior.serializeNBT());
+                tag.put("BehaviorContext", affected.behaviorContext.serializeNBT());
             }
 
             pCompound.put("Effects", listtag);

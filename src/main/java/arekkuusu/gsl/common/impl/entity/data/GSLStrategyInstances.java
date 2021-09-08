@@ -1,33 +1,27 @@
 package arekkuusu.gsl.common.impl.entity.data;
 
-import arekkuusu.gsl.api.GSLChannel;
 import arekkuusu.gsl.api.helper.GSLHelper;
 import arekkuusu.gsl.api.helper.TeamHelper;
 import arekkuusu.gsl.common.impl.entity.Strategic;
+import arekkuusu.gsl.common.impl.entity.StrategicBlocks;
 import arekkuusu.gsl.common.impl.entity.StrategicDimensions;
 import arekkuusu.gsl.common.impl.entity.StrategicDimensions.Weight;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.entity.EntityTypeTest;
-
-import javax.annotation.Nullable;
-import java.util.Map;
 
 public class GSLStrategyInstances {
-    public static final Int2ObjectMap<Strategy> ENTRIES = new Int2ObjectOpenHashMap<>();
+    public static final Int2ObjectMap<Strategy<? extends Strategic>> ENTRIES = new Int2ObjectOpenHashMap<>();
     public static int id = 0;
 
-    public static final Strategy NO_IMPLEMENT = new Strategy(id++) {
+    public static final Strategy<Strategic> NO_IMPLEMENT = new Strategy<>(id++) {
         @Override
         public EntityDimensions entityDimensions(Strategic strategic) {
             return StrategicDimensions.scalable(Weight.CENTER, 0.5F, 0.5F);
         }
     };
 
-    public static final Strategy APPLY_EFFECT_ONCE_SPHERE = new Strategy(id++) {
+    public static final Strategy<Strategic> SPHERE_ONCE_CENTER = new Strategy<>(id++) {
 
         @Override
         public void tick(Strategic strategic) {
@@ -35,36 +29,10 @@ public class GSLStrategyInstances {
             var world = strategic.level;
             var owner = strategic.getOwner();
             var effects = strategic.getEffects();
-            var team = TeamHelper.getEnemyTeamPredicate(owner);
+            var team = strategic.getTeamSelector().apply(owner);
             world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
-                if(!victims.containsKey(user) && victims.put(user, 0) != null) {
+                if (!victims.containsKey(user) && victims.put(user, 0) != null) {
                     effects.forEach(affected -> {
-                        GSLChannel.sendEffectAddSync(user, affected);
-                        GSLHelper.applyEffectOn(user, affected);
-                    });
-                }
-            });
-        }
-
-        @Override
-        public EntityDimensions entityDimensions(Strategic strategic) {
-            return StrategicDimensions.scalable(Weight.CENTER, 0.5F, 0.5F);
-        }
-    };
-
-    public static final Strategy APPLY_EFFECT_ONCE_FLAT = new Strategy(id++) {
-
-        @Override
-        public void tick(Strategic strategic) {
-            var victims = strategic.getVictims();
-            var world = strategic.level;
-            var owner = strategic.getOwner();
-            var effects = strategic.getEffects();
-            var team = TeamHelper.getEnemyTeamPredicate(owner);
-            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
-                if(!victims.containsKey(user) && victims.put(user, 0) != null) {
-                    effects.forEach(affected -> {
-                        GSLChannel.sendEffectAddSync(user, affected);
                         GSLHelper.applyEffectOn(user, affected);
                     });
                 }
@@ -77,7 +45,7 @@ public class GSLStrategyInstances {
         }
     };
 
-    public static final Strategy APPLY_EFFECT_TIMED_SPHERE = new Strategy(id++) {
+    public static final Strategy<Strategic> SPHERE_ONCE_BOTTOM = new Strategy<>(id++) {
 
         @Override
         public void tick(Strategic strategic) {
@@ -85,38 +53,10 @@ public class GSLStrategyInstances {
             var world = strategic.level;
             var owner = strategic.getOwner();
             var effects = strategic.getEffects();
-            var team = TeamHelper.getEnemyTeamPredicate(owner);
+            var team = strategic.getTeamSelector().apply(owner);
             world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
-                Integer integer = victims.putIfAbsent(user, 0);
-                if(integer != null && victims.replace(user, integer, ++integer)) {
+                if (!victims.containsKey(user) && victims.put(user, 0) != null) {
                     effects.forEach(affected -> {
-                        GSLChannel.sendEffectAddSync(user, affected);
-                        GSLHelper.applyEffectOn(user, affected);
-                    });
-                }
-            });
-        }
-
-        @Override
-        public EntityDimensions entityDimensions(Strategic strategic) {
-            return StrategicDimensions.scalable(Weight.CENTER, strategic.getWidth() * 2.0F, strategic.getWidth() * 2.0F);
-        }
-    };
-
-    public static final Strategy APPLY_EFFECT_TIMED_FLAT = new Strategy(id++) {
-
-        @Override
-        public void tick(Strategic strategic) {
-            var victims = strategic.getVictims();
-            var world = strategic.level;
-            var owner = strategic.getOwner();
-            var effects = strategic.getEffects();
-            var team = TeamHelper.getEnemyTeamPredicate(owner);
-            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
-                Integer integer = victims.putIfAbsent(user, 0);
-                if(integer != null && victims.replace(user, integer, ++integer)) {
-                    effects.forEach(affected -> {
-                        GSLChannel.sendEffectAddSync(user, affected);
                         GSLHelper.applyEffectOn(user, affected);
                     });
                 }
@@ -129,11 +69,112 @@ public class GSLStrategyInstances {
         }
     };
 
+    public static final Strategy<Strategic> SPHERE_TIMED_CENTER = new Strategy<>(id++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                Integer integer = victims.putIfAbsent(user, 0);
+                if (integer != null && victims.replace(user, integer, ++integer)) {
+                    effects.forEach(affected -> {
+                        GSLHelper.applyEffectOn(user, affected);
+                    });
+                }
+            });
+        }
+
+        @Override
+        public EntityDimensions entityDimensions(Strategic strategic) {
+            return StrategicDimensions.scalable(Weight.CENTER, strategic.getWidth() * 2.0F, strategic.getWidth() * 2.0F);
+        }
+    };
+
+    public static final Strategy<Strategic> SPHERE_TIMED_BOTTOM = new Strategy<>(id++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                Integer integer = victims.putIfAbsent(user, 0);
+                if (integer != null && victims.replace(user, integer, ++integer)) {
+                    effects.forEach(affected -> {
+                        GSLHelper.applyEffectOn(user, affected);
+                    });
+                }
+            });
+        }
+
+        @Override
+        public EntityDimensions entityDimensions(Strategic strategic) {
+            return StrategicDimensions.scalable(Weight.BOTTOM, strategic.getWidth() * 2.0F, strategic.getWidth() * 2.0F);
+        }
+    };
+
+    public static final Strategy<StrategicBlocks> FLAT_TIMED_BOTTOM = new Strategy<>(id++) {
+
+        @Override
+        public void tick(StrategicBlocks strategic) {
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                Integer integer = victims.putIfAbsent(user, 0);
+                if (integer != null && victims.replace(user, integer, ++integer)) {
+                    effects.forEach(affected -> {
+                        GSLHelper.applyEffectOn(user, affected);
+                    });
+                }
+            });
+        }
+
+        @Override
+        public EntityDimensions entityDimensions(StrategicBlocks strategic) {
+            return StrategicDimensions.scalable(Weight.BOTTOM, strategic.getWidth() * 2.0F, 0.5F);
+        }
+    };
+
+    public static final Strategy<StrategicBlocks> FLAT_ONCE_BOTTOM = new Strategy<>(id++) {
+
+        @Override
+        public void tick(StrategicBlocks strategic) {
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                if (!victims.containsKey(user) && victims.put(user, 0) != null) {
+                    effects.forEach(affected -> {
+                        GSLHelper.applyEffectOn(user, affected);
+                    });
+                }
+            });
+        }
+
+        @Override
+        public EntityDimensions entityDimensions(StrategicBlocks strategic) {
+            return StrategicDimensions.scalable(Weight.BOTTOM, strategic.getWidth() * 2.0F, 0.5F);
+        }
+    };
+
     static {
         ENTRIES.put(NO_IMPLEMENT.getId(), NO_IMPLEMENT);
-        ENTRIES.put(APPLY_EFFECT_ONCE_SPHERE.getId(), APPLY_EFFECT_ONCE_SPHERE);
-        ENTRIES.put(APPLY_EFFECT_ONCE_FLAT.getId(), APPLY_EFFECT_ONCE_FLAT);
-        ENTRIES.put(APPLY_EFFECT_TIMED_SPHERE.getId(), APPLY_EFFECT_TIMED_SPHERE);
-        ENTRIES.put(APPLY_EFFECT_TIMED_FLAT.getId(), APPLY_EFFECT_TIMED_FLAT);
+        ENTRIES.put(SPHERE_ONCE_CENTER.getId(), SPHERE_ONCE_CENTER);
+        ENTRIES.put(SPHERE_ONCE_BOTTOM.getId(), SPHERE_ONCE_BOTTOM);
+        ENTRIES.put(SPHERE_TIMED_CENTER.getId(), SPHERE_TIMED_CENTER);
+        ENTRIES.put(SPHERE_TIMED_BOTTOM.getId(), SPHERE_TIMED_BOTTOM);
+        ENTRIES.put(FLAT_ONCE_BOTTOM.getId(), FLAT_ONCE_BOTTOM);
+        ENTRIES.put(FLAT_TIMED_BOTTOM.getId(), FLAT_TIMED_BOTTOM);
     }
 }
