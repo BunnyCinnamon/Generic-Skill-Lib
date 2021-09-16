@@ -175,7 +175,6 @@ public class Strategic extends Entity {
         return this.owner;
     }
 
-
     @Override
     protected void readAdditionalSaveData(CompoundTag pCompound) {
         this.tickCount = pCompound.getInt("Age");

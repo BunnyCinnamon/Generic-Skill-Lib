@@ -1,8 +1,9 @@
-package arekkuusu.gsl.common.impl;
+package arekkuusu.gsl.common.impl.example;
 
 import arekkuusu.gsl.GSL;
 import arekkuusu.gsl.api.registry.EffectType;
 import arekkuusu.gsl.api.registry.Skill;
+import arekkuusu.gsl.common.impl.DefaultBehaviors;
 import arekkuusu.gsl.common.impl.example.EffectExample;
 import arekkuusu.gsl.common.impl.example.SkillExample;
 import net.minecraftforge.fmllegacy.RegistryObject;

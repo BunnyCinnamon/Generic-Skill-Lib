@@ -13,7 +13,7 @@ import arekkuusu.gsl.common.Registry;
 import arekkuusu.gsl.common.ServerProxy;
 import arekkuusu.gsl.common.impl.DefaultBehaviors;
 import arekkuusu.gsl.common.impl.DefaultEntities;
-import arekkuusu.gsl.common.impl.ExamplesImpl;
+import arekkuusu.gsl.common.impl.example.ExamplesImpl;
 import arekkuusu.gsl.common.network.PacketHandler;
 import arekkuusu.gsl.common.proxy.IProxy;
 import net.minecraft.world.entity.EntityType;

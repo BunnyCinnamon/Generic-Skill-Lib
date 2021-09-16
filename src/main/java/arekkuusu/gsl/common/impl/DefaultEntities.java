@@ -14,7 +14,7 @@ public class DefaultEntities {
             "strategic", () -> EntityType.Builder.of(Strategic::new, MobCategory.MISC).sized(0.5F, 0.5F).build("strategic")
     );
     public static final RegistryObject<EntityType<StrategicBlocks>> STRATEGIC_BLOCKS = GSL.ENTITY_TYPE_DEFERRED_REGISTER.register(
-            "strategicBlocks", () -> EntityType.Builder.of(StrategicBlocks::new, MobCategory.MISC).sized(0.5F, 0.5F).build("strategicBlocks")
+            "strategic_blocks", () -> EntityType.Builder.of(StrategicBlocks::new, MobCategory.MISC).sized(0.5F, 0.5F).build("strategic_blocks")
     );
     public static final RegistryObject<EntityType<Throwable>> THROWABLE = GSL.ENTITY_TYPE_DEFERRED_REGISTER.register(
             "throwable", () -> EntityType.Builder.of(Throwable::new, MobCategory.MISC).sized(0.5F, 0.5F).build("throwable")

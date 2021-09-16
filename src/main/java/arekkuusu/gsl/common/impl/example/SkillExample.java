@@ -11,14 +11,14 @@ import arekkuusu.gsl.api.helper.GSLHelper;
 import arekkuusu.gsl.api.helper.WorldHelper;
 import arekkuusu.gsl.common.impl.DefaultBehaviors;
 import arekkuusu.gsl.common.impl.DefaultEntities;
-import arekkuusu.gsl.common.impl.ExamplesImpl;
-import arekkuusu.gsl.api.GSLChannel;
 import arekkuusu.gsl.common.impl.entity.Throwable;
 import arekkuusu.gsl.common.impl.entity.data.GSLStrategyInstances;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.util.Objects;
 
@@ -26,13 +26,14 @@ public class SkillExample extends Skill<SkillExample.ExampleData> {
 
     public SkillExample(Properties properties) {
         super(properties);
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @Override
     public void use(LivingEntity owner, ExampleData context) {
         Effect effect = ExamplesImpl.EXAMPLE_EFFECT.get().with(data -> {
             data.message = "Hi! #" + context.count++;
-            data.user = WorldHelper.WeakWorldReference.of((Player) owner);
+            data.target = WorldHelper.WeakWorldReference.of((Player) owner);
         });
         Behavior behavior = DefaultBehaviors.EXAMPLE.get().with(data -> {
             data.countDown = 60;
@@ -48,11 +49,10 @@ public class SkillExample extends Skill<SkillExample.ExampleData> {
         throwable.setTeamSelector(TeamHelper.TeamSelector.ANY);
         throwable.addEffect(affected);
         owner.level.addFreshEntity(throwable);
-
-        GSLHelper.applyEffectOn(owner, affected);
     }
 
     // This could then be @SubscribeEvent
+    @SubscribeEvent
     public void onIdk(PlayerEvent.ItemPickupEvent event) {
         if (!event.getPlayer().level.isClientSide()) {
             GSLHelper.triggerSkillOn(event.getPlayer(), this);
