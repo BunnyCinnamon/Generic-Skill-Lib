@@ -75,20 +75,28 @@ public final class GSLDataSerializers {
         }
     };
 
-    public static final EntityDataSerializer<Strategy<Strategic>> STRATEGY = new EntityDataSerializer<>() {
+    public static final EntityDataSerializer<Strategy<Strategic>[]> STRATEGY = new EntityDataSerializer<>() {
         @Override
-        public void write(FriendlyByteBuf pBuffer, Strategy pValue) {
-            pBuffer.writeInt(pValue.getId());
+        public void write(FriendlyByteBuf pBuffer, Strategy[] pValue) {
+            pBuffer.writeInt(pValue.length);
+            for (Strategy<?> strategy : pValue) {
+                pBuffer.writeInt(strategy.getId());
+            }
         }
 
         @Override
-        public Strategy<Strategic> read(FriendlyByteBuf pBuffer) {
-            return (Strategy<Strategic>) GSLStrategyInstances.ENTRIES.get(pBuffer.readInt());
+        public Strategy<Strategic>[] read(FriendlyByteBuf pBuffer) {
+            Strategy<?>[] array = new Strategy[pBuffer.readInt()];
+            for (int i = 0, arrayLength = array.length; i < arrayLength; i++) {
+                array[i] = GSLStrategyInstances.ENTRIES.get(pBuffer.readInt());
+            }
+
+            return (Strategy<Strategic>[]) array;
         }
 
         @Override
-        public Strategy<Strategic> copy(Strategy<Strategic> pValue) {
-            return pValue;
+        public Strategy<Strategic>[] copy(Strategy<Strategic>[] pValue) {
+            return Arrays.copyOf(pValue, pValue.length);
         }
     };
 

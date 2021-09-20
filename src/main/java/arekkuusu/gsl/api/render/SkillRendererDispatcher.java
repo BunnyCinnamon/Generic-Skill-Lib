@@ -33,7 +33,7 @@ public final class SkillRendererDispatcher {
         return getRenderClass((Class<Skill<? extends SerDes>>) skill.getClass());
     }
 
-    public <T extends Skill<S>, S extends SerDes> void registerRenderer(Class<T> skill, SkillRenderer<S> renderer) {
+    public <T extends Skill<S>, S extends SerDes> void add(Class<T> skill, SkillRenderer<S> renderer) {
         SkillRendererDispatcher.INSTANCE.skillRendererMap.put(skill, renderer);
         renderer.setDispatcher(SkillRendererDispatcher.INSTANCE);
     }

@@ -33,7 +33,7 @@ public final class EffectRendererDispatcher {
         return getRenderClass(effect.getClass());
     }
 
-    public <T extends Effect> void registerRenderer(Class<T> effect, EffectRenderer<T> renderer) {
+    public <T extends Effect> void add(Class<T> effect, EffectRenderer<T> renderer) {
         EffectRendererDispatcher.INSTANCE.effectRendererMap.put(effect, renderer);
         renderer.setDispatcher(EffectRendererDispatcher.INSTANCE);
     }

@@ -16,12 +16,4 @@ public class MathHelper {
     public static int fuzzyCompare(double a, double b) {
         return fuzzyEqual(a, b) ? 0 : a < b ? -1 : b < a ? 1 : Booleans.compare(Double.isNaN(a), Double.isNaN(b));
     }
-
-    public static int clamp(int n, int min, int max) {
-        return n < min ? min : Math.min(n, max);
-    }
-
-    public static double clamp(double n, double min, double max) {
-        return n < min ? min : Math.min(n, max);
-    }
 }

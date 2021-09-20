@@ -1,14 +1,14 @@
 package arekkuusu.gsl.common.impl.example;
 
 import arekkuusu.gsl.api.capability.data.Affected;
+import arekkuusu.gsl.api.helper.GSLHelper;
 import arekkuusu.gsl.api.helper.TeamHelper;
 import arekkuusu.gsl.api.helper.TracerHelper;
+import arekkuusu.gsl.api.helper.WorldHelper;
 import arekkuusu.gsl.api.registry.Behavior;
 import arekkuusu.gsl.api.registry.Effect;
 import arekkuusu.gsl.api.registry.Skill;
 import arekkuusu.gsl.api.registry.data.SerDes;
-import arekkuusu.gsl.api.helper.GSLHelper;
-import arekkuusu.gsl.api.helper.WorldHelper;
 import arekkuusu.gsl.common.impl.DefaultBehaviors;
 import arekkuusu.gsl.common.impl.DefaultEntities;
 import arekkuusu.gsl.common.impl.entity.Throwable;
@@ -46,8 +46,10 @@ public class SkillExample extends Skill<SkillExample.ExampleData> {
         Throwable throwable = Objects.requireNonNull(DefaultEntities.THROWABLE.get().create(owner.level));
         throwable.setOwnerDirection(owner, TracerHelper.getLookedAt(owner, 10, TeamHelper.getSelectorAny()).getLocation());
         throwable.setStrategy(GSLStrategyInstances.SPHERE_ONCE_CENTER);
-        throwable.setTeamSelector(TeamHelper.TeamSelector.ANY);
+        throwable.setTeamSelector(TeamHelper.TeamSelector.ENEMY);
         throwable.addEffect(affected);
+        throwable.setWidth(5);
+        throwable.setHeight(5);
         owner.level.addFreshEntity(throwable);
     }
 
@@ -55,6 +57,9 @@ public class SkillExample extends Skill<SkillExample.ExampleData> {
     @SubscribeEvent
     public void onIdk(PlayerEvent.ItemPickupEvent event) {
         if (!event.getPlayer().level.isClientSide()) {
+            if(!GSLHelper.isSkillOn(event.getPlayer(), this)) {
+                GSLHelper.applySkillOn(event.getPlayer(), this);
+            }
             GSLHelper.triggerSkillOn(event.getPlayer(), this);
         }
     }

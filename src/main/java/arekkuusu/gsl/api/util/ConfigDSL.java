@@ -1,13 +1,13 @@
 package arekkuusu.gsl.api.util;
 
 import arekkuusu.gsl.api.GSLAPI;
-import arekkuusu.gsl.api.helper.MathHelper;
 import arekkuusu.gsl.api.registry.Skill;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import it.unimi.dsi.fastutil.ints.Int2DoubleArrayMap;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.util.Tuple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -208,7 +208,7 @@ public class ConfigDSL {
                 double clampRight = Math.max(end, start);
                 result = curve.get(min, max, start, end, lvl);
                 result *= effective;
-                result = MathHelper.clamp(result, clampLeft, clampRight);
+                result = Mth.clamp(result, clampLeft, clampRight);
             } catch (Exception e) {
                 LOGGER.error("Malformed `{}` config for property: {} with level: {}", skill.getRegistryName(), name, lvl);
                 LOGGER.error("It is possible it is missing the property with name {}", name);
@@ -251,7 +251,7 @@ public class ConfigDSL {
         return n == max ? end : start;
     };
     public static final Curve CURVE_FLAT = (min, max, start, end, n) -> {
-        double current = MathHelper.clamp(n, min, max);
+        double current = Mth.clamp(n, min, max);
         double difference = end - start;
         double progress = current / max;
         return start + difference * progress;
@@ -270,7 +270,7 @@ public class ConfigDSL {
         final double finalStrength = strength;
         final double finalPosition = position;
         return (min, max, start, end, n) -> {
-            double current = MathHelper.clamp(n, min, max);
+            double current = Mth.clamp(n, min, max);
             double difference = end - start;
             double progress = (current - min) / (max - min);
             if (progress <= finalPosition) {

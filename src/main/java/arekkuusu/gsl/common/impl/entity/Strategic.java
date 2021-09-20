@@ -38,14 +38,16 @@ public class Strategic extends Entity {
     private static final EntityDataAccessor<Float> DATA_HEIGHT = SynchedEntityData.defineId(Strategic.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_DURATION = SynchedEntityData.defineId(Strategic.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_WAIT_TIME = SynchedEntityData.defineId(Strategic.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Strategy<Strategic>> DATA_STRATEGY = SynchedEntityData.defineId(Strategic.class, GSLDataSerializers.STRATEGY);
+    private static final EntityDataAccessor<Strategy<Strategic>[]> DATA_STRATEGY = SynchedEntityData.defineId(Strategic.class, GSLDataSerializers.STRATEGY);
     private static final int TIME_BETWEEN_APPLICATIONS = 5;
 
     private final Map<Entity, Integer> victims = Maps.newHashMap();
     private final List<Affected> effects = Lists.newArrayList();
+    private EntityDimensions entityDimensions = StrategicDimensions.scalable(StrategicDimensions.Weight.CENTER, 0.5F, 0.5F);
     private TeamHelper.TeamSelector teamSelector = TeamHelper.TeamSelector.ANY;
     @Nullable private LivingEntity owner;
     @Nullable private UUID ownerUUID;
+    private float width, height;
 
     public Strategic(EntityType<? extends Strategic> pEntityType, Level pLevel) {
         super(pEntityType, pLevel);
@@ -57,7 +59,7 @@ public class Strategic extends Entity {
         this.getEntityData().define(DATA_HEIGHT, 0.5F);
         this.getEntityData().define(DATA_DURATION, 600);
         this.getEntityData().define(DATA_WAIT_TIME, 10);
-        this.getEntityData().define(DATA_STRATEGY, GSLStrategyInstances.NO_IMPLEMENT);
+        this.getEntityData().define(DATA_STRATEGY, new Strategy[]{ GSLStrategyInstances.NO_IMPLEMENT });
     }
 
     @Override
@@ -68,10 +70,9 @@ public class Strategic extends Entity {
             return;
         }
         if (this.level.isClientSide()) {
-            this.getStrategy().particles(this);
+
         } else {
             if (this.tickCount % TIME_BETWEEN_APPLICATIONS == 0) {
-                this.getStrategy().tick(this);
             }
         }
     }
@@ -108,16 +109,29 @@ public class Strategic extends Entity {
         }
     }
 
+    public void setMaxWidth(float pWidth) {
+        this.width = pWidth;
+    }
+
+    public void setMaxHeight(float pHeight) {
+        this.height = pHeight;
+    }
+
     public void setTeamSelector(TeamHelper.TeamSelector teamSelector) {
         this.teamSelector = teamSelector;
     }
 
-    public void setStrategy(Strategy strategy) {
+    public void setStrategy(Strategy<Strategic>... strategy) {
         if (!this.level.isClientSide()) {
             this.getEntityData().set(DATA_STRATEGY, strategy);
         }
     }
 
+    public void setEntityDimensions(EntityDimensions entityDimensions) {
+        this.entityDimensions = entityDimensions;
+    }
+
+    @Override
     public void refreshDimensions() {
         double d0 = this.getX();
         double d1 = this.getY();
@@ -150,11 +164,19 @@ public class Strategic extends Entity {
         return this.getEntityData().get(DATA_HEIGHT);
     }
 
+    public float getMaxWidth() {
+        return this.width;
+    }
+
+    public float getMaxHeight() {
+        return this.height;
+    }
+
     public TeamHelper.TeamSelector getTeamSelector() {
         return teamSelector;
     }
 
-    public Strategy<Strategic> getStrategy() {
+    public Strategy<Strategic>[] getStrategy() {
         return this.getEntityData().get(DATA_STRATEGY);
     }
 
@@ -182,8 +204,21 @@ public class Strategic extends Entity {
         this.setWaitTime(pCompound.getInt("WaitTime"));
         this.setWidth(pCompound.getFloat("Width"));
         this.setHeight(pCompound.getFloat("Height"));
+        this.setMaxWidth(pCompound.getFloat("mWidth"));
+        this.setMaxHeight(pCompound.getFloat("mHeight"));
         this.setTeamSelector(NBTHelper.getEnum(TeamHelper.TeamSelector.class, pCompound, "TeamSelector"));
-        this.setStrategy(GSLStrategyInstances.ENTRIES.get(pCompound.getInt("Strategy")));
+        if (pCompound.contains("Strategies", 9)) {
+            ListTag listtag = pCompound.getList("Strategies", Tag.TAG_COMPOUND);
+            Strategy[] array = new Strategy[listtag.size()];
+
+            for(int i = 0; i < listtag.size(); ++i) {
+                CompoundTag tag = listtag.getCompound(i);
+                array[i] = GSLStrategyInstances.ENTRIES.get(tag.getInt("Strategy"));
+            }
+
+            this.setStrategy(array);
+        }
+
         if (pCompound.hasUUID("Owner")) {
             this.ownerUUID = pCompound.getUUID("Owner");
         }
@@ -212,8 +247,20 @@ public class Strategic extends Entity {
         pCompound.putInt("WaitTime", this.getWaitTime());
         pCompound.putFloat("Width", this.getWidth());
         pCompound.putFloat("Height", this.getHeight());
+        pCompound.putFloat("mWidth", this.getMaxWidth());
+        pCompound.putFloat("mHeight", this.getMaxHeight());
         NBTHelper.setEnum(pCompound, "TeamSelector", this.getTeamSelector());
-        pCompound.putInt("Strategy", this.getStrategy().getId());
+
+        if(getStrategy() != null) {
+            ListTag listtag = new ListTag();
+            for (Strategy<Strategic> strategy : getStrategy()) {
+                CompoundTag tag = new CompoundTag();
+                tag.putInt("Id", strategy.getId());
+                listtag.add(tag);
+            }
+            pCompound.put("Strategies", listtag);
+        }
+
         if (this.ownerUUID != null) {
             pCompound.putUUID("Owner", this.ownerUUID);
         }
@@ -227,6 +274,7 @@ public class Strategic extends Entity {
                 tag.putString("Resource", affected.behavior.getType().getRegistryName().toString());
                 tag.put("Behavior", affected.behavior.serializeNBT());
                 tag.put("BehaviorContext", affected.behaviorContext.serializeNBT());
+                listtag.add(tag);
             }
 
             pCompound.put("Effects", listtag);
@@ -257,6 +305,6 @@ public class Strategic extends Entity {
 
     @Override
     public EntityDimensions getDimensions(Pose pPose) {
-        return this.getStrategy().entityDimensions(this);
+        return this.entityDimensions;
     }
 }

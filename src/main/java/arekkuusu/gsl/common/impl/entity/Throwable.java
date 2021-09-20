@@ -31,11 +31,13 @@ import java.util.List;
 import java.util.Objects;
 
 public class Throwable extends AbstractHurtingProjectile {
-    private static final EntityDataAccessor<Strategy<Strategic>> DATA_STRATEGY = SynchedEntityData.defineId(Throwable.class, GSLDataSerializers.STRATEGY);
+
+    private static final EntityDataAccessor<Strategy<Strategic>[]> DATA_STRATEGY = SynchedEntityData.defineId(Throwable.class, GSLDataSerializers.STRATEGY);
     private static final EntityDataAccessor<EntityType<?>> DATA_ENTITY = SynchedEntityData.defineId(Throwable.class, GSLDataSerializers.ENTITY_TYPE);
 
     private final List<Affected> effects = Lists.newArrayList();
     private TeamHelper.TeamSelector teamSelector = TeamHelper.TeamSelector.ANY;
+    private float width, height;
 
     public Throwable(EntityType<? extends Throwable> p_37199_, Level p_37200_) {
         super(p_37199_, p_37200_);
@@ -44,7 +46,7 @@ public class Throwable extends AbstractHurtingProjectile {
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.getEntityData().define(DATA_STRATEGY, GSLStrategyInstances.NO_IMPLEMENT);
+        this.getEntityData().define(DATA_STRATEGY, (Strategy<Strategic>[]) new Strategy<?>[]{GSLStrategyInstances.NO_IMPLEMENT});
         this.getEntityData().define(DATA_ENTITY, DefaultEntities.STRATEGIC.get());
     }
 
@@ -60,6 +62,8 @@ public class Throwable extends AbstractHurtingProjectile {
                 instance.addAllEffect(effects);
                 instance.setTeamSelector(getTeamSelector());
                 instance.setStrategy(strategy);
+                instance.setMaxWidth(getWidth());
+                instance.setMaxHeight(getHeight());
                 instance.setOwner(owner);
                 instance.setPos(this.getPosition(1F));
                 this.level.addFreshEntity(instance);
@@ -72,18 +76,34 @@ public class Throwable extends AbstractHurtingProjectile {
         this.teamSelector = teamSelector;
     }
 
-    public TeamHelper.TeamSelector getTeamSelector() {
-        return teamSelector;
-    }
-
-    public void setStrategy(Strategy strategy) {
+    public void setStrategy(Strategy<Strategic>... strategy) {
         if (!this.level.isClientSide()) {
             this.getEntityData().set(DATA_STRATEGY, strategy);
         }
     }
 
-    public Strategy<Strategic> getStrategy() {
+    public void setWidth(float pWidth) {
+        this.width = pWidth;
+    }
+
+    public void setHeight(float pHeight) {
+        this.height = pHeight;
+    }
+
+    public TeamHelper.TeamSelector getTeamSelector() {
+        return teamSelector;
+    }
+
+    public Strategy<Strategic>[] getStrategy() {
         return this.getEntityData().get(DATA_STRATEGY);
+    }
+
+    public float getWidth() {
+        return width;
+    }
+
+    public float getHeight() {
+        return height;
     }
 
     public void setOwnerDirection(LivingEntity owner, Vec3 target) {
@@ -136,6 +156,9 @@ public class Throwable extends AbstractHurtingProjectile {
     public void readAdditionalSaveData(CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
         this.setTeamSelector(NBTHelper.getEnum(TeamHelper.TeamSelector.class, pCompound, "TeamSelector"));
+        this.setWidth(pCompound.getFloat("Width"));
+        this.setHeight(pCompound.getFloat("Height"));
+        this.setStrategy(GSLStrategyInstances.ENTRIES.get(pCompound.getInt("Strategy")));
         if (pCompound.contains("Effects", 9)) {
             ListTag listtag = pCompound.getList("Effects", Tag.TAG_COMPOUND);
             this.effects.clear();
@@ -157,6 +180,9 @@ public class Throwable extends AbstractHurtingProjectile {
     public void addAdditionalSaveData(CompoundTag pCompound) {
         super.addAdditionalSaveData(pCompound);
         NBTHelper.setEnum(pCompound, "TeamSelector", this.getTeamSelector());
+        pCompound.putFloat("Width", this.getWidth());
+        pCompound.putFloat("Height", this.getHeight());
+        pCompound.putInt("Strategy", this.getStrategy().getId());
         if (!this.effects.isEmpty()) {
             ListTag listtag = new ListTag();
 

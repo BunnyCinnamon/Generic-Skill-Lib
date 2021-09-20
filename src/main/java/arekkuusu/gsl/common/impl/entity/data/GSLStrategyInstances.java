@@ -10,14 +10,33 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.world.entity.EntityDimensions;
 
+import java.util.Objects;
+
 public class GSLStrategyInstances {
     public static final Int2ObjectMap<Strategy<? extends Strategic>> ENTRIES = new Int2ObjectOpenHashMap<>();
     public static int id = 0;
 
     public static final Strategy<Strategic> NO_IMPLEMENT = new Strategy<>(id++) {
+
         @Override
-        public EntityDimensions entityDimensions(Strategic strategic) {
+        public void tick(Strategic strategic) {
+            strategic.setEntityDimensions(entityDimensions(strategic));
+        }
+
+        private EntityDimensions entityDimensions(Strategic strategic) {
             return StrategicDimensions.scalable(Weight.CENTER, 0.5F, 0.5F);
+        }
+    };
+
+    public static final Strategy<Strategic> GROW_SPHERE = new Strategy<>(id++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            strategic.setEntityDimensions(entityDimensions(strategic));
+        }
+
+        private EntityDimensions entityDimensions(Strategic strategic) {
+            return StrategicDimensions.scalable(Weight.CENTER, strategic.getWidth() * 2.0F, strategic.getWidth() * 2.0F);
         }
     };
 
@@ -31,7 +50,8 @@ public class GSLStrategyInstances {
             var effects = strategic.getEffects();
             var team = strategic.getTeamSelector().apply(owner);
             world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
-                if (!victims.containsKey(user) && victims.put(user, 0) != null) {
+                if (!victims.containsKey(user)) {
+                    victims.put(user, 0);
                     effects.forEach(affected -> {
                         GSLHelper.applyEffectOn(user, affected);
                     });
@@ -39,8 +59,7 @@ public class GSLStrategyInstances {
             });
         }
 
-        @Override
-        public EntityDimensions entityDimensions(Strategic strategic) {
+        private EntityDimensions entityDimensions(Strategic strategic) {
             return StrategicDimensions.scalable(Weight.CENTER, strategic.getWidth() * 2.0F, strategic.getWidth() * 2.0F);
         }
     };
@@ -55,7 +74,8 @@ public class GSLStrategyInstances {
             var effects = strategic.getEffects();
             var team = strategic.getTeamSelector().apply(owner);
             world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
-                if (!victims.containsKey(user) && victims.put(user, 0) != null) {
+                if (!victims.containsKey(user)) {
+                    victims.put(user, 0);
                     effects.forEach(affected -> {
                         GSLHelper.applyEffectOn(user, affected);
                     });
@@ -63,8 +83,7 @@ public class GSLStrategyInstances {
             });
         }
 
-        @Override
-        public EntityDimensions entityDimensions(Strategic strategic) {
+        private EntityDimensions entityDimensions(Strategic strategic) {
             return StrategicDimensions.scalable(Weight.BOTTOM, strategic.getWidth() * 2.0F, strategic.getWidth() * 2.0F);
         }
     };
@@ -80,7 +99,7 @@ public class GSLStrategyInstances {
             var team = strategic.getTeamSelector().apply(owner);
             world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
                 Integer integer = victims.putIfAbsent(user, 0);
-                if (integer != null && victims.replace(user, integer, ++integer)) {
+                if (victims.replace(user, integer, Objects.nonNull(integer) ? ++integer : 0)) {
                     effects.forEach(affected -> {
                         GSLHelper.applyEffectOn(user, affected);
                     });
@@ -88,8 +107,7 @@ public class GSLStrategyInstances {
             });
         }
 
-        @Override
-        public EntityDimensions entityDimensions(Strategic strategic) {
+        private EntityDimensions entityDimensions(Strategic strategic) {
             return StrategicDimensions.scalable(Weight.CENTER, strategic.getWidth() * 2.0F, strategic.getWidth() * 2.0F);
         }
     };
@@ -105,7 +123,7 @@ public class GSLStrategyInstances {
             var team = strategic.getTeamSelector().apply(owner);
             world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
                 Integer integer = victims.putIfAbsent(user, 0);
-                if (integer != null && victims.replace(user, integer, ++integer)) {
+                if (victims.replace(user, integer, Objects.nonNull(integer) ? ++integer : 0)) {
                     effects.forEach(affected -> {
                         GSLHelper.applyEffectOn(user, affected);
                     });
@@ -113,8 +131,7 @@ public class GSLStrategyInstances {
             });
         }
 
-        @Override
-        public EntityDimensions entityDimensions(Strategic strategic) {
+        private EntityDimensions entityDimensions(Strategic strategic) {
             return StrategicDimensions.scalable(Weight.BOTTOM, strategic.getWidth() * 2.0F, strategic.getWidth() * 2.0F);
         }
     };
@@ -127,10 +144,11 @@ public class GSLStrategyInstances {
             var world = strategic.level;
             var owner = strategic.getOwner();
             var effects = strategic.getEffects();
+            var blocks = strategic.getBlocksWithCursor();
             var team = strategic.getTeamSelector().apply(owner);
             world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
                 Integer integer = victims.putIfAbsent(user, 0);
-                if (integer != null && victims.replace(user, integer, ++integer)) {
+                if (victims.replace(user, integer, Objects.nonNull(integer) ? ++integer : 0)) {
                     effects.forEach(affected -> {
                         GSLHelper.applyEffectOn(user, affected);
                     });
@@ -138,8 +156,7 @@ public class GSLStrategyInstances {
             });
         }
 
-        @Override
-        public EntityDimensions entityDimensions(StrategicBlocks strategic) {
+        private EntityDimensions entityDimensions(StrategicBlocks strategic) {
             return StrategicDimensions.scalable(Weight.BOTTOM, strategic.getWidth() * 2.0F, 0.5F);
         }
     };
@@ -152,9 +169,11 @@ public class GSLStrategyInstances {
             var world = strategic.level;
             var owner = strategic.getOwner();
             var effects = strategic.getEffects();
+            var blocks = strategic.getBlocksWithCursor();
             var team = strategic.getTeamSelector().apply(owner);
             world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
-                if (!victims.containsKey(user) && victims.put(user, 0) != null) {
+                if (!victims.containsKey(user)) {
+                    victims.put(user, 0);
                     effects.forEach(affected -> {
                         GSLHelper.applyEffectOn(user, affected);
                     });
@@ -162,8 +181,7 @@ public class GSLStrategyInstances {
             });
         }
 
-        @Override
-        public EntityDimensions entityDimensions(StrategicBlocks strategic) {
+        private EntityDimensions entityDimensions(StrategicBlocks strategic) {
             return StrategicDimensions.scalable(Weight.BOTTOM, strategic.getWidth() * 2.0F, 0.5F);
         }
     };

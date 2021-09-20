@@ -8,7 +8,7 @@ import arekkuusu.gsl.api.registry.EffectType;
 import arekkuusu.gsl.api.registry.Skill;
 import arekkuusu.gsl.api.registry.data.SerDes;
 import arekkuusu.gsl.client.ClientProxy;
-import arekkuusu.gsl.client.render.ModRenders;
+import arekkuusu.gsl.client.render.DefaultRenders;
 import arekkuusu.gsl.common.Registry;
 import arekkuusu.gsl.common.ServerProxy;
 import arekkuusu.gsl.common.impl.DefaultBehaviors;
@@ -17,6 +17,7 @@ import arekkuusu.gsl.common.impl.example.ExamplesImpl;
 import arekkuusu.gsl.common.network.PacketHandler;
 import arekkuusu.gsl.common.proxy.IProxy;
 import net.minecraft.world.entity.EntityType;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -67,9 +68,11 @@ public class GSL {
         modBus.addListener(this::setupRegistry);
         modBus.addListener(this::onModConfigEvent);
         modBus.addListener(this::onCapabilityEvent);
+        modBus.addListener(this::onRenderRegisterEvent);
         SKILL_DEFERRED_REGISTER.register(modBus);
         EFFECT_TYPE_DEFERRED_REGISTER.register(modBus);
         BEHAVIOR_TYPE_DEFERRED_REGISTER.register(modBus);
+        ENTITY_TYPE_DEFERRED_REGISTER.register(modBus);
         //Forge Bus
         IEventBus forgeBus = MinecraftForge.EVENT_BUS;
         forgeBus.addListener(this::setupServer);
@@ -82,7 +85,7 @@ public class GSL {
     }
 
     public void setupClient(final FMLClientSetupEvent event) {
-        ModRenders.init();
+
     }
 
     public void setupServer(final FMLServerStartingEvent event) {
@@ -113,5 +116,9 @@ public class GSL {
     public void onCapabilityEvent(final RegisterCapabilitiesEvent event) {
         event.register(SkilledCapability.class);
         event.register(AffectedCapability.class);
+    }
+
+    public void onRenderRegisterEvent(final EntityRenderersEvent.RegisterRenderers event) {
+        DefaultRenders.register(event);
     }
 }
