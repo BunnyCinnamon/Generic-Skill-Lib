@@ -1,13 +1,14 @@
 package arekkuusu.gsl.common.impl.entity;
 
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.phys.AABB;
 
 public class StrategicDimensions extends EntityDimensions {
 
-    private final Weight box;
+    private final Type box;
 
-    public StrategicDimensions(Weight box, float p_20381_, float p_20382_, boolean p_20383_) {
+    public StrategicDimensions(Type box, float p_20381_, float p_20382_, boolean p_20383_) {
         super(p_20381_, p_20382_, p_20383_);
         this.box = box;
     }
@@ -24,15 +25,15 @@ public class StrategicDimensions extends EntityDimensions {
         return !this.fixed && (pWidthFactor != 1.0F || pHeightFactor != 1.0F) ? scalable(this.box, this.width * pWidthFactor, this.height * pHeightFactor) : this;
     }
 
-    public static EntityDimensions scalable(Weight box, float pWidth, float pHeight) {
+    public static EntityDimensions scalable(Type box, float pWidth, float pHeight) {
         return new StrategicDimensions(box, pWidth, pHeight, false);
     }
 
-    public static EntityDimensions fixed(Weight box, float pWidth, float pHeight) {
+    public static EntityDimensions fixed(Type box, float pWidth, float pHeight) {
         return new StrategicDimensions(box, pWidth, pHeight, true);
     }
 
-    public enum Weight {
+    public enum Type implements StringRepresentable {
         CENTER {
             @Override
             AABB aabb(double w, double h, double x, double y, double z) {
@@ -47,5 +48,10 @@ public class StrategicDimensions extends EntityDimensions {
         };
 
         abstract AABB aabb(double w, double h, double x, double y, double z);
+
+        @Override
+        public String getSerializedName() {
+            return name();
+        }
     }
 }

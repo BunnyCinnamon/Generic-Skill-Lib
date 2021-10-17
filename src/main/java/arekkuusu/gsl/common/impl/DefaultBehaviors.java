@@ -8,9 +8,6 @@ import net.minecraftforge.fmllegacy.RegistryObject;
 
 public class DefaultBehaviors {
 
-    public static final RegistryObject<BehaviorType<BehaviorExample>> EXAMPLE = GSL.BEHAVIOR_TYPE_DEFERRED_REGISTER.register(
-            "example", () -> BehaviorType.builder().factory(BehaviorExample::new).build()
-    );
     public static final RegistryObject<BehaviorType<OnEndBehavior>> ON_END = GSL.BEHAVIOR_TYPE_DEFERRED_REGISTER.register(
             "on_end", () -> BehaviorType.builder().factory(OnEndBehavior::new).build()
     );

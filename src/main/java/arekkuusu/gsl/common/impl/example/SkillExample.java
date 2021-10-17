@@ -9,10 +9,10 @@ import arekkuusu.gsl.api.registry.Behavior;
 import arekkuusu.gsl.api.registry.Effect;
 import arekkuusu.gsl.api.registry.Skill;
 import arekkuusu.gsl.api.registry.data.SerDes;
-import arekkuusu.gsl.common.impl.DefaultBehaviors;
 import arekkuusu.gsl.common.impl.DefaultEntities;
+import arekkuusu.gsl.common.impl.entity.data.EntityProperties;
 import arekkuusu.gsl.common.impl.entity.Throwable;
-import arekkuusu.gsl.common.impl.entity.data.GSLStrategyInstances;
+import arekkuusu.gsl.common.impl.entity.data.EntityBehaviorInstances;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -31,25 +31,40 @@ public class SkillExample extends Skill<SkillExample.ExampleData> {
 
     @Override
     public void use(LivingEntity owner, ExampleData context) {
-        Effect effect = ExamplesImpl.EXAMPLE_EFFECT.get().with(data -> {
+        final var effect = ExamplesImpl.EXAMPLE_EFFECT.get().with(data -> {
             data.message = "Hi! #" + context.count++;
             data.target = WorldHelper.WeakWorldReference.of((Player) owner);
         });
-        Behavior behavior = DefaultBehaviors.EXAMPLE.get().with(data -> {
+        final var behavior = ExamplesImpl.EXAMPLE.get().with(data -> {
             data.countDown = 60;
         });
-        Affected affected = Affected.builder()
-                .of(effect)
-                .following(behavior)
-                .build(owner.getStringUUID() + "example");
 
-        Throwable throwable = Objects.requireNonNull(DefaultEntities.THROWABLE.get().create(owner.level));
+        final var properties = new EntityProperties<>() {{
+
+            final var affected = Affected.builder()
+                    .of(effect)
+                    .following(behavior)
+                    .build(owner.getStringUUID());
+            setEffect(affected);
+            //
+            setBehavior(EntityBehaviorInstances.SCAN_UNIQUE);
+            setBehavior(EntityBehaviorInstances.GROW_EVENLY);
+            setTeamSelector(TeamHelper.TeamSelector.ENEMY);
+            setGrowthDelay(250);
+            setHeightInitial(4);
+            setHeightFinal(5);
+            setWidthInitial(2);
+            setWidthFinal(5);
+            setDuration(20);
+
+        }};
+
+        final var throwable = Objects.requireNonNull(DefaultEntities.THROWABLE.get().create(owner.level));
         throwable.setOwnerDirection(owner, TracerHelper.getLookedAt(owner, 10, TeamHelper.getSelectorAny()).getLocation());
-        throwable.setStrategy(GSLStrategyInstances.SPHERE_ONCE_CENTER);
-        throwable.setTeamSelector(TeamHelper.TeamSelector.ENEMY);
-        throwable.addEffect(affected);
-        throwable.setWidth(5);
-        throwable.setHeight(5);
+        throwable.setEntityType(DefaultEntities.STRATEGIC.get());
+        throwable.setEntityProperties(properties);
+        throwable.setFlyTime(20);
+        throwable.setFlySpeed(0.2D);
         owner.level.addFreshEntity(throwable);
     }
 
@@ -57,7 +72,7 @@ public class SkillExample extends Skill<SkillExample.ExampleData> {
     @SubscribeEvent
     public void onIdk(PlayerEvent.ItemPickupEvent event) {
         if (!event.getPlayer().level.isClientSide()) {
-            if(!GSLHelper.isSkillOn(event.getPlayer(), this)) {
+            if (!GSLHelper.isSkillOn(event.getPlayer(), this)) {
                 GSLHelper.applySkillOn(event.getPlayer(), this);
             }
             GSLHelper.triggerSkillOn(event.getPlayer(), this);

@@ -1,12 +1,12 @@
 package arekkuusu.gsl.common.impl.entity.data;
 
-import arekkuusu.gsl.common.impl.entity.Strategic;
+import net.minecraft.world.entity.Entity;
 
-public abstract class Strategy<T extends Strategic> {
+public abstract class EntityBehavior<T extends Entity> {
 
     private final int id;
 
-    public Strategy(int id) {
+    public EntityBehavior(int id) {
         this.id = id;
     }
 

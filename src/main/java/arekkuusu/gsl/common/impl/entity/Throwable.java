@@ -1,109 +1,132 @@
 package arekkuusu.gsl.common.impl.entity;
 
 import arekkuusu.gsl.api.GSLRegistries;
-import arekkuusu.gsl.api.capability.data.Affected;
-import arekkuusu.gsl.api.helper.NBTHelper;
-import arekkuusu.gsl.api.helper.TeamHelper;
-import arekkuusu.gsl.api.registry.data.BehaviorContext;
 import arekkuusu.gsl.common.impl.DefaultEntities;
-import arekkuusu.gsl.common.impl.entity.data.GSLDataSerializers;
-import arekkuusu.gsl.common.impl.entity.data.GSLStrategyInstances;
-import arekkuusu.gsl.common.impl.entity.data.Strategy;
-import com.google.common.collect.Lists;
+import arekkuusu.gsl.common.impl.entity.data.EntityProperties;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.AbstractHurtingProjectile;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 
 public class Throwable extends AbstractHurtingProjectile {
 
-    private static final EntityDataAccessor<Strategy<Strategic>[]> DATA_STRATEGY = SynchedEntityData.defineId(Throwable.class, GSLDataSerializers.STRATEGY);
-    private static final EntityDataAccessor<EntityType<?>> DATA_ENTITY = SynchedEntityData.defineId(Throwable.class, GSLDataSerializers.ENTITY_TYPE);
-
-    private final List<Affected> effects = Lists.newArrayList();
-    private TeamHelper.TeamSelector teamSelector = TeamHelper.TeamSelector.ANY;
-    private float width, height;
+    private EntityProperties<?> entityProperties = new EntityProperties<>();
+    private EntityType<?> entityType = DefaultEntities.STRATEGIC.get();
+    private float width = 0.5F, height = 0.5F;
+    private int flyTime;
 
     public Throwable(EntityType<? extends Throwable> p_37199_, Level p_37200_) {
         super(p_37199_, p_37200_);
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.getEntityData().define(DATA_STRATEGY, (Strategy<Strategic>[]) new Strategy<?>[]{GSLStrategyInstances.NO_IMPLEMENT});
-        this.getEntityData().define(DATA_ENTITY, DefaultEntities.STRATEGIC.get());
+    public void tick() {
+        Entity entity = this.getOwner();
+        if (this.level.isClientSide || (entity == null || !entity.isRemoved()) && this.level.hasChunkAt(this.blockPosition())) {
+            super.tick();
+
+            if(this.tickCount > getFlyTime()) {
+                HitResult hitResult = new HitResult(getPosition(1F)) {
+                    @Override
+                    public Type getType() {
+                        return Type.MISS;
+                    }
+                };
+                this.onHit(hitResult);
+            }
+
+            HitResult hitresult = ProjectileUtil.getHitResult(this, this::canHitEntity);
+            if (hitresult.getType() != HitResult.Type.MISS && !net.minecraftforge.event.ForgeEventFactory.onProjectileImpact(this, hitresult)) {
+                this.onHit(hitresult);
+            }
+
+            this.checkInsideBlocks();
+            Vec3 vec3 = this.getDeltaMovement();
+            double d0 = this.getX() + vec3.x;
+            double d1 = this.getY() + vec3.y;
+            double d2 = this.getZ() + vec3.z;
+            ProjectileUtil.rotateTowardsMovement(this, 0.2F);
+            float f = this.getInertia();
+            if (this.isInWater()) {
+                for(int i = 0; i < 4; ++i) {
+                    float f1 = 0.25F;
+                    this.level.addParticle(ParticleTypes.BUBBLE, d0 - vec3.x * 0.25D, d1 - vec3.y * 0.25D, d2 - vec3.z * 0.25D, vec3.x, vec3.y, vec3.z);
+                }
+
+                f = 0.8F;
+            }
+
+            this.setDeltaMovement(vec3.add(this.xPower, this.yPower, this.zPower).scale((double)f));
+            this.setPos(d0, d1, d2);
+
+            this.level.addParticle(this.getTrailParticle(), d0, d1 + 0.5D, d2, 0.0D, 0.0D, 0.0D);
+        } else {
+            this.discard();
+        }
     }
 
     @Override
     protected void onHit(HitResult pResult) {
         super.onHit(pResult);
-        if (!this.level.isClientSide()) {
+        if (!this.level.isClientSide() && !this.isRemoved()) {
             var owner = (LivingEntity) this.getOwner();
-            var entity = this.getEntityData().get(DATA_ENTITY);
-            var strategy = this.getEntityData().get(DATA_STRATEGY);
-            var instance = (Strategic) entity.create(this.level);
+            var instance = (Strategic) entityType.create(this.level);
             if(Objects.nonNull(instance)) {
-                instance.addAllEffect(effects);
-                instance.setTeamSelector(getTeamSelector());
-                instance.setStrategy(strategy);
-                instance.setMaxWidth(getWidth());
-                instance.setMaxHeight(getHeight());
+                instance.applyProperties(entityProperties);
                 instance.setOwner(owner);
-                instance.setPos(this.getPosition(1F));
+                instance.setPos(pResult.getLocation());
                 this.level.addFreshEntity(instance);
             }
             this.discard();
         }
     }
 
-    public void setTeamSelector(TeamHelper.TeamSelector teamSelector) {
-        this.teamSelector = teamSelector;
+    public EntityProperties<?> getEntityProperties() {
+        return entityProperties;
     }
 
-    public void setStrategy(Strategy<Strategic>... strategy) {
-        if (!this.level.isClientSide()) {
-            this.getEntityData().set(DATA_STRATEGY, strategy);
-        }
+    public void setEntityProperties(EntityProperties<?> entityProperties) {
+        this.entityProperties = entityProperties;
     }
 
-    public void setWidth(float pWidth) {
-        this.width = pWidth;
+    public EntityType<?> getEntityType() {
+        return entityType;
     }
 
-    public void setHeight(float pHeight) {
-        this.height = pHeight;
+    public void setEntityType(EntityType<?> entityType) {
+        this.entityType = entityType;
     }
 
-    public TeamHelper.TeamSelector getTeamSelector() {
-        return teamSelector;
+    public int getFlyTime() {
+        return flyTime;
     }
 
-    public Strategy<Strategic>[] getStrategy() {
-        return this.getEntityData().get(DATA_STRATEGY);
+    public void setFlyTime(int flyTime) {
+        this.flyTime = flyTime;
     }
 
     public float getWidth() {
         return width;
     }
 
+    public void setWidth(float pWidth) {
+        this.width = pWidth;
+    }
+
     public float getHeight() {
         return height;
+    }
+
+    public void setHeight(float pHeight) {
+        this.height = pHeight;
     }
 
     public void setOwnerDirection(LivingEntity owner, Vec3 target) {
@@ -124,17 +147,34 @@ public class Throwable extends AbstractHurtingProjectile {
         this.setPos(owner.getX() + vec3.x * 2.0D, owner.getY(0.5D) + vec3.y * 2.0D, owner.getZ() + vec3.z * 2.0D);
     }
 
-    public void addEffect(Affected affected) {
-        this.effects.add(affected);
+    public void setFlySpeed(double speed) {
+        this.xPower *= speed;
+        this.yPower *= speed;
+        this.zPower *= speed;
     }
 
-    public void addAllEffect(Collection<Affected> affected) {
-        this.effects.addAll(affected);
+    @Override
+    public void refreshDimensions() {
+        double d0 = this.getX();
+        double d1 = this.getY();
+        double d2 = this.getZ();
+        super.refreshDimensions();
+        this.setPos(d0, d1, d2);
+    }
+
+    @Override
+    public EntityDimensions getDimensions(Pose pPose) {
+        return StrategicDimensions.scalable(StrategicDimensions.Type.CENTER, this.width, this.height);
     }
 
     @Override
     protected boolean canHitEntity(Entity p_36842_) {
-        return super.canHitEntity(p_36842_) && this.getTeamSelector().apply(getOwner()).test(p_36842_);
+        return super.canHitEntity(p_36842_) && this.entityProperties.getTeamSelector().apply(getOwner()).test(p_36842_);
+    }
+
+    @Override
+    public boolean isInvulnerable() {
+        return true;
     }
 
     @Override
@@ -148,6 +188,11 @@ public class Throwable extends AbstractHurtingProjectile {
     }
 
     @Override
+    public boolean canBeCollidedWith() {
+        return false;
+    }
+
+    @Override
     protected ParticleOptions getTrailParticle() {
         return ParticleTypes.ELECTRIC_SPARK;
     }
@@ -155,46 +200,24 @@ public class Throwable extends AbstractHurtingProjectile {
     @Override
     public void readAdditionalSaveData(CompoundTag pCompound) {
         super.readAdditionalSaveData(pCompound);
-        this.setTeamSelector(NBTHelper.getEnum(TeamHelper.TeamSelector.class, pCompound, "TeamSelector"));
         this.setWidth(pCompound.getFloat("Width"));
         this.setHeight(pCompound.getFloat("Height"));
-        this.setStrategy(GSLStrategyInstances.ENTRIES.get(pCompound.getInt("Strategy")));
-        if (pCompound.contains("Effects", 9)) {
-            ListTag listtag = pCompound.getList("Effects", Tag.TAG_COMPOUND);
-            this.effects.clear();
-
-            for(int i = 0; i < listtag.size(); ++i) {
-                CompoundTag tag = listtag.getCompound(i);
-                Affected affected = new Affected();
-                affected.id = tag.getString("Id");
-                affected.behavior = GSLRegistries.BEHAVIOR_TYPES.getValue(new ResourceLocation(tag.getString("Resource"))).create();
-                affected.behavior.deserializeNBT(tag.getCompound("Behavior"));
-                affected.behaviorContext = new BehaviorContext();
-                affected.behaviorContext.deserializeNBT(tag.getCompound("BehaviorContext"));
-                this.addEffect(affected);
-            }
-        }
+        this.setFlyTime(pCompound.getInt("FlyTime"));
+        this.setEntityType(GSLRegistries.ENTITY_TYPES.getValue(new ResourceLocation(pCompound.getString("EntityType"))));
+        EntityProperties<Strategic> properties = new EntityProperties<>();
+        properties.readAdditionalSaveData(pCompound.getCompound("Properties"));
+        this.setEntityProperties(properties);
     }
 
     @Override
     public void addAdditionalSaveData(CompoundTag pCompound) {
         super.addAdditionalSaveData(pCompound);
-        NBTHelper.setEnum(pCompound, "TeamSelector", this.getTeamSelector());
         pCompound.putFloat("Width", this.getWidth());
         pCompound.putFloat("Height", this.getHeight());
-        pCompound.putInt("Strategy", this.getStrategy().getId());
-        if (!this.effects.isEmpty()) {
-            ListTag listtag = new ListTag();
-
-            for(Affected affected : this.effects) {
-                CompoundTag tag = new CompoundTag();
-                tag.putString("Id", affected.id);
-                tag.putString("Resource", affected.behavior.getType().getRegistryName().toString());
-                tag.put("Behavior", affected.behavior.serializeNBT());
-                tag.put("BehaviorContext", affected.behaviorContext.serializeNBT());
-            }
-
-            pCompound.put("Effects", listtag);
-        }
+        pCompound.putFloat("FlyTime", this.getFlyTime());
+        pCompound.putString("EntityType", this.getEntityType().getRegistryName().toString());
+        CompoundTag compoundTag = new CompoundTag();
+        this.getEntityProperties().addAdditionalSaveData(compoundTag);
+        pCompound.put("Properties", compoundTag);
     }
 }

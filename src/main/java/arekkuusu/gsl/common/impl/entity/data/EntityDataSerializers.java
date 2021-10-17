@@ -2,18 +2,19 @@ package arekkuusu.gsl.common.impl.entity.data;
 
 import arekkuusu.gsl.api.GSLRegistries;
 import arekkuusu.gsl.common.impl.entity.Strategic;
+import com.google.common.collect.Sets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataSerializer;
-import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
+import java.util.Set;
 
-public final class GSLDataSerializers {
+public final class EntityDataSerializers {
 
     public static final EntityDataSerializer<BlockPos[][]> BLOCK_POS_ARRAY = new EntityDataSerializer<>() {
         @Override
@@ -75,52 +76,34 @@ public final class GSLDataSerializers {
         }
     };
 
-    public static final EntityDataSerializer<Strategy<Strategic>[]> STRATEGY = new EntityDataSerializer<>() {
+    public static final EntityDataSerializer<Set<EntityBehavior<? extends Strategic>>> STRATEGY = new EntityDataSerializer<>() {
         @Override
-        public void write(FriendlyByteBuf pBuffer, Strategy[] pValue) {
-            pBuffer.writeInt(pValue.length);
-            for (Strategy<?> strategy : pValue) {
+        public void write(FriendlyByteBuf pBuffer, Set<EntityBehavior<? extends Strategic>> pValue) {
+            pBuffer.writeInt(pValue.size());
+            for (EntityBehavior<?> strategy : pValue) {
                 pBuffer.writeInt(strategy.getId());
             }
         }
 
         @Override
-        public Strategy<Strategic>[] read(FriendlyByteBuf pBuffer) {
-            Strategy<?>[] array = new Strategy[pBuffer.readInt()];
-            for (int i = 0, arrayLength = array.length; i < arrayLength; i++) {
-                array[i] = GSLStrategyInstances.ENTRIES.get(pBuffer.readInt());
+        public Set<EntityBehavior<? extends Strategic>> read(FriendlyByteBuf pBuffer) {
+            Set<EntityBehavior<? extends Strategic>> array = Sets.newHashSet();
+            for (int i = 0, arrayLength = pBuffer.readInt(); i < arrayLength; i++) {
+                array.add((EntityBehavior<? extends Strategic>) EntityBehaviorInstances.ENTRIES.get(pBuffer.readInt()));
             }
 
-            return (Strategy<Strategic>[]) array;
+            return array;
         }
 
         @Override
-        public Strategy<Strategic>[] copy(Strategy<Strategic>[] pValue) {
-            return Arrays.copyOf(pValue, pValue.length);
-        }
-    };
-
-    public static final EntityDataSerializer<EntityType<?>> ENTITY_TYPE = new EntityDataSerializer<>() {
-        @Override
-        public void write(FriendlyByteBuf pBuffer, EntityType<?> pValue) {
-            pBuffer.writeUtf(pValue.getRegistryName().toString());
-        }
-
-        @Override
-        public EntityType<?> read(FriendlyByteBuf pBuffer) {
-            return GSLRegistries.ENTITY_TYPES.getValue(new ResourceLocation(pBuffer.readUtf()));
-        }
-
-        @Override
-        public EntityType<?> copy(EntityType<?> pValue) {
-            return pValue;
+        public Set<EntityBehavior<? extends Strategic>> copy(Set<EntityBehavior<? extends Strategic>> pValue) {
+            return Sets.newHashSet(pValue);
         }
     };
 
     static {
-        EntityDataSerializers.registerSerializer(BLOCK_POS_ARRAY);
-        EntityDataSerializers.registerSerializer(BLOCK_STATE_ARRAY);
-        EntityDataSerializers.registerSerializer(STRATEGY);
-        EntityDataSerializers.registerSerializer(ENTITY_TYPE);
+        net.minecraft.network.syncher.EntityDataSerializers.registerSerializer(BLOCK_POS_ARRAY);
+        net.minecraft.network.syncher.EntityDataSerializers.registerSerializer(BLOCK_STATE_ARRAY);
+        net.minecraft.network.syncher.EntityDataSerializers.registerSerializer(STRATEGY);
     }
 }
