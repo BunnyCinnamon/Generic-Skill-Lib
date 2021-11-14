@@ -35,7 +35,7 @@ public class SkilledCapability implements ICapabilitySerializable<CompoundTag> {
     public final Map<Skill<?>, Skilled> skills = Maps.newLinkedHashMap();
 
     public void add(Skill<?> skill) {
-        Skilled skilled = new Skilled();
+        var skilled = new Skilled();
         skilled.skill = skill;
         skilled.context = skilled.skill.create();
         this.skills.put(skill, skilled);
@@ -65,17 +65,17 @@ public class SkilledCapability implements ICapabilitySerializable<CompoundTag> {
     //** NBT **//
 
     public CompoundTag writeNBT(SkilledCapability instance) {
-        CompoundTag tag = new CompoundTag();
+        var tag = new CompoundTag();
         save(tag, "skills", instance.skills.values());
         return tag;
     }
 
     private void save(CompoundTag tag, String name, Collection<Skilled> collection) {
         var list = new ListTag();
-        for (Skilled value : collection) {
-            CompoundTag nbt = new CompoundTag();
-            NBTHelper.setRegistry(nbt, "skill", value.skill);
-            NBTHelper.setNBT(nbt, "context", value.context.serializeNBT());
+        for (var value : collection) {
+            var nbt = new CompoundTag();
+            NBTHelper.putRegistry(nbt, "skill", value.skill);
+            NBTHelper.putNBT(nbt, "context", value.context.serializeNBT());
             list.add(nbt);
         }
         tag.put(name, list);
@@ -89,8 +89,8 @@ public class SkilledCapability implements ICapabilitySerializable<CompoundTag> {
     private void load(CompoundTag tag, String name, Consumer<Skilled> consumer) {
         var list = NBTHelper.getNBTList(tag, name);
         for (int i = 0; i < list.size(); i++) {
-            CompoundTag nbt = list.getCompound(i);
-            Skilled skilled = new Skilled();
+            var nbt = list.getCompound(i);
+            var skilled = new Skilled();
             skilled.skill = NBTHelper.getRegistry(nbt, "skill", Skill.class);
             skilled.context = skilled.skill.create();
             skilled.context.deserializeNBT(NBTHelper.getNBTTag(nbt, "context"));

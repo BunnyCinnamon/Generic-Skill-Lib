@@ -59,7 +59,7 @@ public class AffectedCapability implements ICapabilitySerializable<CompoundTag> 
     //** NBT **//
 
     public CompoundTag writeNBT(AffectedCapability instance) {
-        CompoundTag tag = new CompoundTag();
+        var tag = new CompoundTag();
         save(tag, "queueRemove", instance.queueRemove);
         save(tag, "queueAdd", instance.queueAdd);
         save(tag, "active", instance.active.values());
@@ -68,12 +68,12 @@ public class AffectedCapability implements ICapabilitySerializable<CompoundTag> 
 
     private void save(CompoundTag tag, String name, Collection<Affected> collection) {
         var list = new ListTag();
-        for (Affected value : collection) {
-            CompoundTag nbt = new CompoundTag();
-            NBTHelper.putString(nbt, "id", value.id);
-            NBTHelper.setRegistry(nbt, "type", value.behavior.getType());
-            NBTHelper.setNBT(nbt, "behavior", value.behavior.serializeNBT());
-            NBTHelper.setNBT(nbt, "context", value.behaviorContext.serializeNBT());
+        for (var value : collection) {
+            var nbt = new CompoundTag();
+            nbt.putString("id", value.id);
+            NBTHelper.putRegistry(nbt, "type", value.behavior.getType());
+            NBTHelper.putNBT(nbt, "behavior", value.behavior.serializeNBT());
+            NBTHelper.putNBT(nbt, "context", value.behaviorContext.serializeNBT());
             list.add(nbt);
         }
         tag.put(name, list);
@@ -91,9 +91,9 @@ public class AffectedCapability implements ICapabilitySerializable<CompoundTag> 
     private void load(CompoundTag tag, String name, Consumer<Affected> consumer) {
         var list = NBTHelper.getNBTList(tag, name);
         for (int i = 0; i < list.size(); i++) {
-            CompoundTag nbt = list.getCompound(i);
-            Affected affected = new Affected();
-            affected.id = NBTHelper.getString(nbt, "id");
+            var nbt = list.getCompound(i);
+            var affected = new Affected();
+            affected.id = nbt.getString("id");
             affected.behavior = NBTHelper.getRegistry(nbt, "type", BehaviorType.class).create();
             affected.behavior.deserializeNBT(NBTHelper.getNBTTag(nbt, "behavior"));
             affected.behaviorContext = new BehaviorContext(NBTHelper.getNBTTag(nbt, "context"));

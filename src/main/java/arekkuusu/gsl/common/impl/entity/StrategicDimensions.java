@@ -34,16 +34,52 @@ public class StrategicDimensions extends EntityDimensions {
     }
 
     public enum Type implements StringRepresentable {
+        ON_HIT {
+            @Override
+            AABB aabb(double w, double h, double x, double y, double z) {
+                throw new AbstractMethodError("Only set with throwable entity");
+            }
+        },
         CENTER {
             @Override
             AABB aabb(double w, double h, double x, double y, double z) {
                 return new AABB(x - w, y - h, z - w, x + w, y + h, z + w);
             }
         },
-        BOTTOM {
+        DOWN {
+            @Override
+            AABB aabb(double w, double h, double x, double y, double z) {
+                return new AABB(x - w, y - h * 2, z - w, x + w, y, z + w);
+            }
+        },
+        UP {
             @Override
             AABB aabb(double w, double h, double x, double y, double z) {
                 return new AABB(x - w, y, z - w, x + w, y + h * 2, z + w);
+            }
+        },
+        EAST {
+            @Override
+            AABB aabb(double w, double h, double x, double y, double z) {
+                return new AABB(x, y - w, z - w, x + h * 2, y + w, z + w);
+            }
+        },
+        WEST {
+            @Override
+            AABB aabb(double w, double h, double x, double y, double z) {
+                return new AABB(x - h * 2, y - w, z - w, x, y + w, z + w);
+            }
+        },
+        NORTH {
+            @Override
+            AABB aabb(double w, double h, double x, double y, double z) {
+                return new AABB(x - w, y - w, z - h * 2, x + w, y + w, z);
+            }
+        },
+        SOUTH {
+            @Override
+            AABB aabb(double w, double h, double x, double y, double z) {
+                return new AABB(x - w, y - w, z, x + w, y + w, z + h * 2);
             }
         };
 

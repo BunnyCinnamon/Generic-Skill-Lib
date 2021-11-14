@@ -11,7 +11,7 @@ import net.minecraftforge.fmllegacy.RegistryObject;
 public class DefaultEntities {
 
     public static final RegistryObject<EntityType<Strategic>> STRATEGIC = GSL.ENTITY_TYPE_DEFERRED_REGISTER.register(
-            "strategic", () -> EntityType.Builder.of(Strategic::new, MobCategory.MISC).sized(0.5F, 0.5F).build("strategic")
+            "strategic", () -> EntityType.Builder.of(Strategic::new, MobCategory.MISC).sized(0.1F, 0.1F).build("strategic")
     );
     public static final RegistryObject<EntityType<StrategicBlocks>> STRATEGIC_BLOCKS = GSL.ENTITY_TYPE_DEFERRED_REGISTER.register(
             "strategic_blocks", () -> EntityType.Builder.of(StrategicBlocks::new, MobCategory.MISC).sized(0.5F, 0.5F).build("strategic_blocks")

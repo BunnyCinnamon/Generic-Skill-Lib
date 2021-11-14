@@ -41,7 +41,7 @@ public class StrategicBlocks extends Strategic {
     }
 
     public void updateSpread() {
-        BlockPos[][] positions = this.getEntityData().get(DATA_BLOCKS);
+        var positions = this.getEntityData().get(DATA_BLOCKS);
         double perTick = (double) (positions.length) / (double) (this.getGrowthDelay());
         this.cursorProgress += perTick;
         if(MathHelper.fuzzyCompare(this.cursorProgress += perTick, 1D) == 1) {

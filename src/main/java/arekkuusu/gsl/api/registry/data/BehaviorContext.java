@@ -21,8 +21,8 @@ public class BehaviorContext extends SerDes {
 
     @Override
     public void writeNBT(CompoundTag compound) {
-        NBTHelper.setRegistry(compound, "effect", this.effect.getType());
-        NBTHelper.setNBT(compound, "context", this.effect.serializeNBT());
+        NBTHelper.putRegistry(compound, "effect", this.effect.getType());
+        NBTHelper.putNBT(compound, "context", this.effect.serializeNBT());
     }
 
     @Override

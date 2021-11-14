@@ -2,6 +2,7 @@ package arekkuusu.gsl.common.impl.entity.data;
 
 import arekkuusu.gsl.api.helper.GSLHelper;
 import arekkuusu.gsl.api.helper.TeamHelper;
+import arekkuusu.gsl.api.helper.TracerHelper;
 import arekkuusu.gsl.common.impl.entity.Strategic;
 import arekkuusu.gsl.common.impl.entity.StrategicBlocks;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -11,7 +12,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.Shapes;
 
 import javax.annotation.Nullable;
@@ -23,16 +23,16 @@ import java.util.Set;
 public class EntityBehaviorInstances {
     public static final Int2ObjectMap<EntityBehavior<? extends Entity>> ENTRIES = new Int2ObjectOpenHashMap<>();
     public static final int TIME_BETWEEN_APPLICATIONS = 5;
-    public static int id = 0;
+    public static int ID_INCREMENT = 0;
 
-    public static final EntityBehavior<Strategic> NO_IMPLEMENT = new EntityBehavior<>(id++) {
+    public static final EntityBehavior<Strategic> NO_IMPLEMENT = new EntityBehavior<>(ID_INCREMENT++) {
 
         @Override
         public void tick(Strategic strategic) {
         }
     };
 
-    public static final EntityBehavior<Strategic> GROW_EVENLY = new EntityBehavior<>(id++) {
+    public static final EntityBehavior<Strategic> EXPAND_EVENLY = new EntityBehavior<>(ID_INCREMENT++) {
 
         @Override
         public void tick(Strategic strategic) {
@@ -54,77 +54,70 @@ public class EntityBehaviorInstances {
         }
     };
 
-    public static final EntityBehavior<Strategic> SCAN_UNIQUE = new EntityBehavior<>(id++) {
+    public static final EntityBehavior<Strategic> EXPAND_HEIGHT_FIRST = new EntityBehavior<>(ID_INCREMENT++) {
 
         @Override
         public void tick(Strategic strategic) {
-            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
-                return;
             if (strategic.level.isClientSide())
                 return;
-
-            var victims = strategic.getVictims();
-            var world = strategic.level;
-            var owner = strategic.getOwner();
-            var effects = strategic.getEffects();
-            var team = strategic.getTeamSelector().apply(owner);
-            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
-                if (!victims.containsKey(user.getUUID())) {
-                    victims.put(user.getUUID(), 0);
-                    effects.forEach(affected -> {
-                        GSLHelper.applyEffectOn(user, affected);
-                    });
-                }
-            });
+            float currentHeight = strategic.getCurrentHeight();
+            float currentWidth = strategic.getCurrentWidth();
+            float heightInitial = strategic.getHeightInitial();
+            float widthInitial = strategic.getWidthInitial();
+            float heightFinal = strategic.getHeightFinal();
+            float widthFinal = strategic.getWidthFinal();
+            int growthDelay = strategic.getGrowthDelay();
+            if (strategic.tickCount < growthDelay) {
+                float widthPerTick = (widthFinal - widthInitial) / growthDelay;
+                strategic.setCurrentWidth(Mth.clamp(currentWidth + widthPerTick, widthInitial, widthFinal));
+            }
+            if (strategic.tickCount < growthDelay / 2) {
+                float heightPerTick = (heightFinal - heightInitial) / (growthDelay / 2F);
+                strategic.setCurrentHeight(Mth.clamp(currentHeight + heightPerTick, heightInitial, heightFinal));
+            }
         }
     };
 
-    public static final EntityBehavior<Strategic> SCAN_ALWAYS = new EntityBehavior<>(id++) {
+    public static final EntityBehavior<Strategic> EXPAND_WIDTH_FIRST = new EntityBehavior<>(ID_INCREMENT++) {
 
         @Override
         public void tick(Strategic strategic) {
-            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
-                return;
             if (strategic.level.isClientSide())
                 return;
-
-            var victims = strategic.getVictims();
-            var world = strategic.level;
-            var owner = strategic.getOwner();
-            var effects = strategic.getEffects();
-            var team = strategic.getTeamSelector().apply(owner);
-            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
-                Integer integer = victims.putIfAbsent(user.getUUID(), 0);
-                if (victims.replace(user.getUUID(), integer, Objects.nonNull(integer) ? ++integer : 0)) {
-                    effects.forEach(affected -> {
-                        GSLHelper.applyEffectOn(user, affected);
-                    });
-                }
-            });
+            float currentHeight = strategic.getCurrentHeight();
+            float currentWidth = strategic.getCurrentWidth();
+            float heightInitial = strategic.getHeightInitial();
+            float widthInitial = strategic.getWidthInitial();
+            float heightFinal = strategic.getHeightFinal();
+            float widthFinal = strategic.getWidthFinal();
+            int growthDelay = strategic.getGrowthDelay();
+            if (strategic.tickCount < growthDelay) {
+                float heightPerTick = (heightFinal - heightInitial) / growthDelay;
+                strategic.setCurrentHeight(Mth.clamp(currentHeight + heightPerTick, heightInitial, heightFinal));
+            }
+            if (strategic.tickCount < growthDelay / 2) {
+                float widthPerTick = (widthFinal - widthInitial) / (growthDelay / 2F);
+                strategic.setCurrentWidth(Mth.clamp(currentWidth + widthPerTick, widthInitial, widthFinal));
+            }
         }
     };
 
-    public static final EntityBehavior<StrategicBlocks> SPREAD_FLOOR_BLOCKS = new EntityBehavior<StrategicBlocks>(id++) {
-
-        boolean isSpread;
+    public static final EntityBehavior<StrategicBlocks> EXPAND_FLOOR_BLOCKS = new EntityBehavior<StrategicBlocks>(ID_INCREMENT++) {
 
         @Override
         public void tick(StrategicBlocks strategic) {
-            if (!this.isSpread) {
-                if (strategic.getBlocks().length == 0) {
-                    this.spreadOnTerrain(strategic);
-                }
-                this.isSpread = true;
+            if (!strategic.level.isClientSide() && strategic.getBlocks().length == 0) {
+                this.spreadOnTerrain(strategic);
             }
         }
 
         public void spreadOnTerrain(StrategicBlocks strategic) {
-            BlockPos[][] positions = strategic.getBlocks();
-            int radius = (int) Math.floor(strategic.getWidthInitial());
-            Set<BlockPos> visited = new HashSet<>();
-            Set<BlockPos> queue = new HashSet<>();
-            BlockPos origin = strategic.getOnPos().below(); //Down into the ground if any
-            BlockPos original = getValid(strategic.level, origin); //Look for the ground
+            var positions = strategic.getBlocks();
+            int radius = (int) Math.floor(strategic.getWidthFinal());
+            var visited = new HashSet<BlockPos>();
+            var queue = new HashSet<BlockPos>();
+            var origin = strategic.getOnPos().below(); //Down into the ground if any
+            var original = getValid(strategic.level, origin); //Look for the ground
             if (original != null) {
                 positions = Arrays.copyOf(positions, positions.length + 1);
                 positions[0] = new BlockPos[]{original};
@@ -134,10 +127,10 @@ public class EntityBehaviorInstances {
                 while (true) {
                     positions = Arrays.copyOf(positions, positions.length + 1);
                     positions[i] = new BlockPos[0];
-                    Set<BlockPos> temp = new HashSet<>();
+                    var temp = new HashSet<BlockPos>();
                     int j = 0;
-                    for (BlockPos pos : queue) {
-                        BlockPos validated = getValid(strategic.level, pos);
+                    for (var pos : queue) {
+                        var validated = getValid(strategic.level, pos);
                         if (validated != null && isWithingRadius(original, validated, radius)) {
                             if (visited.add(validated)) {
                                 positions[i] = Arrays.copyOf(positions[i], positions[i].length + 1);
@@ -157,7 +150,7 @@ public class EntityBehaviorInstances {
 
         @Nullable
         public BlockPos getValid(Level level, BlockPos pos) {
-            BlockPos.MutableBlockPos mPos = new BlockPos.MutableBlockPos(pos.getX(), pos.getY(), pos.getZ());
+            var mPos = new BlockPos.MutableBlockPos(pos.getX(), pos.getY(), pos.getZ());
 
             if (!isSolid(level, mPos)) {
                 for (int j = 0; ; j++) {
@@ -187,7 +180,7 @@ public class EntityBehaviorInstances {
         }
 
         public boolean isSolid(Level level, BlockPos pos) {
-            BlockState state = level.getBlockState(pos);
+            var state = level.getBlockState(pos);
             return state.getCollisionShape(level, pos) != Shapes.empty();
         }
 
@@ -199,7 +192,273 @@ public class EntityBehaviorInstances {
         }
     };
 
-    public static final EntityBehavior<StrategicBlocks> SCAN_BLOCKS_UNIQUE = new EntityBehavior<>(id++) {
+    public static final EntityBehavior<Strategic> SCAN_UNIQUE_BB = new EntityBehavior<>(ID_INCREMENT++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
+                return;
+            if (strategic.level.isClientSide())
+                return;
+
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                if (!victims.containsKey(user.getUUID())) {
+                    victims.put(user.getUUID(), 0);
+                    effects.forEach(affected -> {
+                        GSLHelper.applyEffectOn(user, affected);
+                    });
+                }
+            });
+        }
+    };
+
+    public static final EntityBehavior<Strategic> SCAN_ALWAYS_BB = new EntityBehavior<>(ID_INCREMENT++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
+                return;
+            if (strategic.level.isClientSide())
+                return;
+
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                Integer integer = victims.putIfAbsent(user.getUUID(), 0);
+                if (victims.replace(user.getUUID(), integer, Objects.nonNull(integer) ? ++integer : 0)) {
+                    effects.forEach(affected -> {
+                        GSLHelper.applyEffectOn(user, affected);
+                    });
+                }
+            });
+        }
+    };
+
+    public static final EntityBehavior<Strategic> SCAN_UNIQUE_CONE_20 = new EntityBehavior<>(ID_INCREMENT++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
+                return;
+            if (strategic.level.isClientSide())
+                return;
+
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                if(TracerHelper.isInCone(strategic, user, 20)) {
+                    if (!victims.containsKey(user.getUUID())) {
+                        victims.put(user.getUUID(), 0);
+                        effects.forEach(affected -> {
+                            GSLHelper.applyEffectOn(user, affected);
+                        });
+                    }
+                }
+            });
+        }
+    };
+
+    public static final EntityBehavior<Strategic> SCAN_UNIQUE_CONE_40 = new EntityBehavior<>(ID_INCREMENT++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
+                return;
+            if (strategic.level.isClientSide())
+                return;
+
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                if(TracerHelper.isInCone(strategic, user, 40)) {
+                    if (!victims.containsKey(user.getUUID())) {
+                        victims.put(user.getUUID(), 0);
+                        effects.forEach(affected -> {
+                            GSLHelper.applyEffectOn(user, affected);
+                        });
+                    }
+                }
+            });
+        }
+    };
+
+    public static final EntityBehavior<Strategic> SCAN_UNIQUE_CONE_60 = new EntityBehavior<>(ID_INCREMENT++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
+                return;
+            if (strategic.level.isClientSide())
+                return;
+
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                if(TracerHelper.isInCone(strategic, user, 60)) {
+                    if (!victims.containsKey(user.getUUID())) {
+                        victims.put(user.getUUID(), 0);
+                        effects.forEach(affected -> {
+                            GSLHelper.applyEffectOn(user, affected);
+                        });
+                    }
+                }
+            });
+        }
+    };
+
+    public static final EntityBehavior<Strategic> SCAN_UNIQUE_CONE_80 = new EntityBehavior<>(ID_INCREMENT++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
+                return;
+            if (strategic.level.isClientSide())
+                return;
+
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                if(TracerHelper.isInCone(strategic, user, 80)) {
+                    if (!victims.containsKey(user.getUUID())) {
+                        victims.put(user.getUUID(), 0);
+                        effects.forEach(affected -> {
+                            GSLHelper.applyEffectOn(user, affected);
+                        });
+                    }
+                }
+            });
+        }
+    };
+
+    public static final EntityBehavior<Strategic> SCAN_ALWAYS_CONE_20 = new EntityBehavior<>(ID_INCREMENT++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
+                return;
+            if (strategic.level.isClientSide())
+                return;
+
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                if(TracerHelper.isInCone(strategic, user, 20)) {
+                    Integer integer = victims.putIfAbsent(user.getUUID(), 0);
+                    if (victims.replace(user.getUUID(), integer, Objects.nonNull(integer) ? ++integer : 0)) {
+                        effects.forEach(affected -> {
+                            GSLHelper.applyEffectOn(user, affected);
+                        });
+                    }
+                }
+            });
+        }
+    };
+
+    public static final EntityBehavior<Strategic> SCAN_ALWAYS_CONE_40 = new EntityBehavior<>(ID_INCREMENT++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
+                return;
+            if (strategic.level.isClientSide())
+                return;
+
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                if(TracerHelper.isInCone(strategic, user, 40)) {
+                    Integer integer = victims.putIfAbsent(user.getUUID(), 0);
+                    if (victims.replace(user.getUUID(), integer, Objects.nonNull(integer) ? ++integer : 0)) {
+                        effects.forEach(affected -> {
+                            GSLHelper.applyEffectOn(user, affected);
+                        });
+                    }
+                }
+            });
+        }
+    };
+
+    public static final EntityBehavior<Strategic> SCAN_ALWAYS_CONE_60 = new EntityBehavior<>(ID_INCREMENT++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
+                return;
+            if (strategic.level.isClientSide())
+                return;
+
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                if(TracerHelper.isInCone(strategic, user, 60)) {
+                    Integer integer = victims.putIfAbsent(user.getUUID(), 0);
+                    if (victims.replace(user.getUUID(), integer, Objects.nonNull(integer) ? ++integer : 0)) {
+                        effects.forEach(affected -> {
+                            GSLHelper.applyEffectOn(user, affected);
+                        });
+                    }
+                }
+            });
+        }
+    };
+
+    public static final EntityBehavior<Strategic> SCAN_ALWAYS_CONE_80 = new EntityBehavior<>(ID_INCREMENT++) {
+
+        @Override
+        public void tick(Strategic strategic) {
+            if (strategic.tickCount % TIME_BETWEEN_APPLICATIONS != 0)
+                return;
+            if (strategic.level.isClientSide())
+                return;
+
+            var victims = strategic.getVictims();
+            var world = strategic.level;
+            var owner = strategic.getOwner();
+            var effects = strategic.getEffects();
+            var team = strategic.getTeamSelector().apply(owner);
+            world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
+                if(TracerHelper.isInCone(strategic, user, 80)) {
+                    Integer integer = victims.putIfAbsent(user.getUUID(), 0);
+                    if (victims.replace(user.getUUID(), integer, Objects.nonNull(integer) ? ++integer : 0)) {
+                        effects.forEach(affected -> {
+                            GSLHelper.applyEffectOn(user, affected);
+                        });
+                    }
+                }
+            });
+        }
+    };
+
+    public static final EntityBehavior<StrategicBlocks> SCAN_BLOCKS_UNIQUE = new EntityBehavior<>(ID_INCREMENT++) {
 
         @Override
         public void tick(StrategicBlocks strategic) {
@@ -216,9 +475,9 @@ public class EntityBehaviorInstances {
             var blocks = strategic.getBlocksWithCursor();
             world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
                 boolean withinHeight = false;
-                BlockPos entityPos = user.getOnPos();
-                BlockPos pos = entityPos.below();
-                if (Arrays.stream(blocks).anyMatch(l -> Arrays.asList(l).contains(pos))) {
+                var entityPos = user.getOnPos();
+                var pos = entityPos;
+                if (Arrays.stream(blocks).filter(Objects::nonNull).anyMatch(l -> Arrays.asList(l).contains(pos))) {
                     withinHeight = pos.getY() - user.getY() <= 1;
                 }
                 if (!victims.containsKey(user.getUUID()) && withinHeight) {
@@ -231,7 +490,7 @@ public class EntityBehaviorInstances {
         }
     };
 
-    public static final EntityBehavior<StrategicBlocks> SCAN_BLOCKS_ALWAYS = new EntityBehavior<>(id++) {
+    public static final EntityBehavior<StrategicBlocks> SCAN_BLOCKS_ALWAYS = new EntityBehavior<>(ID_INCREMENT++) {
 
         @Override
         public void tick(StrategicBlocks strategic) {
@@ -248,8 +507,8 @@ public class EntityBehaviorInstances {
             var blocks = strategic.getBlocksWithCursor();
             world.getEntities(TeamHelper.typeTest(), strategic.getBoundingBox(), team).forEach(user -> {
                 boolean withinHeight = false;
-                BlockPos entityPos = user.getOnPos();
-                BlockPos pos = entityPos.below();
+                var entityPos = user.getOnPos();
+                var pos = entityPos.below();
                 if (Arrays.stream(blocks).anyMatch(l -> Arrays.asList(l).contains(pos))) {
                     withinHeight = pos.getY() - user.getY() <= 1;
                 }
@@ -266,12 +525,26 @@ public class EntityBehaviorInstances {
     };
 
     static {
-        ENTRIES.put(NO_IMPLEMENT.getId(), NO_IMPLEMENT);
-        ENTRIES.put(GROW_EVENLY.getId(), GROW_EVENLY);
-        ENTRIES.put(SCAN_UNIQUE.getId(), SCAN_UNIQUE);
-        ENTRIES.put(SCAN_ALWAYS.getId(), SCAN_ALWAYS);
-        ENTRIES.put(SPREAD_FLOOR_BLOCKS.getId(), SPREAD_FLOOR_BLOCKS);
-        ENTRIES.put(SCAN_BLOCKS_UNIQUE.getId(), SCAN_BLOCKS_UNIQUE);
-        ENTRIES.put(SCAN_BLOCKS_ALWAYS.getId(), SCAN_BLOCKS_ALWAYS);
+        put(NO_IMPLEMENT);
+        put(EXPAND_EVENLY);
+        put(EXPAND_HEIGHT_FIRST);
+        put(EXPAND_WIDTH_FIRST);
+        put(EXPAND_FLOOR_BLOCKS);
+        put(SCAN_UNIQUE_BB);
+        put(SCAN_ALWAYS_BB);
+        put(SCAN_BLOCKS_UNIQUE);
+        put(SCAN_BLOCKS_ALWAYS);
+        put(SCAN_ALWAYS_CONE_20);
+        put(SCAN_ALWAYS_CONE_40);
+        put(SCAN_ALWAYS_CONE_60);
+        put(SCAN_ALWAYS_CONE_80);
+        put(SCAN_UNIQUE_CONE_20);
+        put(SCAN_UNIQUE_CONE_40);
+        put(SCAN_UNIQUE_CONE_60);
+        put(SCAN_UNIQUE_CONE_80);
+    }
+
+    public static void put(EntityBehavior<? extends Entity> behavior) {
+        ENTRIES.put(behavior.getId(), behavior);
     }
 }

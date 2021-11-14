@@ -14,7 +14,7 @@ public final class GSLHelper {
 
     public static <T extends SerDes> void triggerSkillOn(LivingEntity entity, Skill<T> skill) {
         GSLCapabilities.skill(entity).ifPresent(c -> {
-            Skilled skilled = c.skills.get(skill);
+            var skilled = c.skills.get(skill);
             if (skilled != null)
                 //noinspection unchecked
                 skill.use(entity, (T) skilled.context);
@@ -23,7 +23,7 @@ public final class GSLHelper {
 
     public static <T extends SerDes> void triggerSkillOn(ItemStack itemStack, LivingEntity entity, Skill<T> skill) {
         GSLCapabilities.skill(itemStack).ifPresent(c -> {
-            Skilled skilled = c.skills.get(skill);
+            var skilled = c.skills.get(skill);
             if (skilled != null)
                 //noinspection unchecked
                 skill.use(entity, (T) skilled.context);

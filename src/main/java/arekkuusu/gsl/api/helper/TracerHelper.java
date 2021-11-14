@@ -45,7 +45,7 @@ public final class TracerHelper {
         AABB bb = new AABB(new BlockPos(start))
                 .expandTowards(difference.multiply(distance, distance, distance))
                 .inflate(1.0D);
-        EntityHitResult result = TracerHelper.rayTraceEntities(world, source, start, end, bb, predicate);
+        EntityHitResult result = TracerHelper.getEntityHitResult(world, source, start, end, bb, predicate);
         if (result == null) {
             result = new EntityRayTraceResultEmpty();
         }
@@ -94,8 +94,26 @@ public final class TracerHelper {
         return false;
     }
 
+    public static HitResult getHitResult(Entity source, Predicate<Entity> predicate) {
+        Vec3 vec3 = source.getDeltaMovement();
+        Level level = source.level;
+        Vec3 vec31 = source.position();
+        Vec3 vec32 = vec31.add(vec3);
+        HitResult hitresult = level.clip(new ClipContext(vec31, vec32, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, source));
+        if (hitresult.getType() != HitResult.Type.MISS) {
+            vec32 = hitresult.getLocation();
+        }
+
+        HitResult hitResult = TracerHelper.getEntityHitResult(level, source, vec31, vec32, source.getBoundingBox().expandTowards(source.getDeltaMovement()).inflate(1.0D), predicate);
+        if (hitResult != null) {
+            hitresult = hitResult;
+        }
+
+        return hitresult;
+    }
+
     @Nullable
-    public static EntityHitResult rayTraceEntities(Level worldIn, Entity projectile, Vec3 startVec, Vec3 endVec, AABB boundingBox, java.util.function.Predicate<Entity> filter) {
+    public static EntityHitResult getEntityHitResult(Level worldIn, Entity projectile, Vec3 startVec, Vec3 endVec, AABB boundingBox, Predicate<Entity> filter) {
         double d0 = Double.MAX_VALUE;
         Entity entity = null;
         Vec3 entityVector = null;
@@ -118,8 +136,29 @@ public final class TracerHelper {
 
     public static final class EntityRayTraceResultEmpty extends EntityHitResult {
 
-        EntityRayTraceResultEmpty() {
+        public EntityRayTraceResultEmpty() {
             super(null, null);
+        }
+
+        public EntityRayTraceResultEmpty(Vec3 location) {
+            super(null, location);
+        }
+
+        @Override
+        @Nonnull
+        public Type getType() {
+            return Type.MISS;
+        }
+    }
+
+    public static final class RayTraceResultEmpty extends HitResult {
+
+        public RayTraceResultEmpty() {
+            super(null);
+        }
+
+        public RayTraceResultEmpty(Vec3 location) {
+            super(location);
         }
 
         @Override

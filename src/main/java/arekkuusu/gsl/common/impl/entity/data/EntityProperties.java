@@ -17,7 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 import java.util.Set;
 
-public class EntityProperties<T extends Strategic> {
+public class EntityProperties {
     private final Set<EntityBehavior<? extends Strategic>> behaviors = Sets.newHashSet();
     private final List<Affected> effects = Lists.newArrayList();
     private StrategicDimensions.Type dimensionsType = StrategicDimensions.Type.CENTER;
@@ -27,13 +27,14 @@ public class EntityProperties<T extends Strategic> {
     private float widthFinal;
     private float heightFinal;
     private int growthDelay;
+    private int destroyDelay;
     private int duration;
     
     public Set<EntityBehavior<? extends Strategic>> getBehaviors() {
         return behaviors;
     }
 
-    public void setBehavior(EntityBehavior<T> behavior) {
+    public void setBehavior(EntityBehavior<? extends Strategic> behavior) {
         this.behaviors.add(behavior);
     }
 
@@ -93,6 +94,14 @@ public class EntityProperties<T extends Strategic> {
         this.growthDelay = growthDelay;
     }
 
+    public int getDestroyDelay() {
+        return destroyDelay;
+    }
+
+    public void setDestroyDelay(int destroyDelay) {
+        this.destroyDelay = destroyDelay;
+    }
+
     public int getDuration() {
         return duration;
     }
@@ -112,6 +121,7 @@ public class EntityProperties<T extends Strategic> {
     public void readAdditionalSaveData(CompoundTag pCompound) {
         this.setDuration(pCompound.getInt("Duration"));
         this.setGrowthDelay(pCompound.getInt("GrowthDelay"));
+        this.setDestroyDelay(pCompound.getInt("DestroyDelay"));
         this.setWidthInitial(pCompound.getFloat("Width"));
         this.setHeightInitial(pCompound.getFloat("Height"));
         this.setWidthFinal(pCompound.getFloat("mWidth"));
@@ -119,22 +129,22 @@ public class EntityProperties<T extends Strategic> {
         this.setTeamSelector(NBTHelper.getEnum(TeamHelper.TeamSelector.class, pCompound, "TeamSelector"));
         this.setDimensionsType(NBTHelper.getEnum(StrategicDimensions.Type.class, pCompound, "DimensionsType"));
         if (pCompound.contains("Behaviors", 9)) {
-            ListTag listtag = pCompound.getList("Behaviors", Tag.TAG_COMPOUND);
+            var listtag = pCompound.getList("Behaviors", Tag.TAG_COMPOUND);
             this.getBehaviors().clear();
 
             for (int i = 0; i < listtag.size(); ++i) {
-                CompoundTag tag = listtag.getCompound(i);
-                setBehavior((EntityBehavior<T>) EntityBehaviorInstances.ENTRIES.get(tag.getInt("Strategy")));
+                var tag = listtag.getCompound(i);
+                setBehavior((EntityBehavior<? extends Strategic>) EntityBehaviorInstances.ENTRIES.get(tag.getInt("Strategy")));
             }
         }
 
         if (pCompound.contains("Effects", 9)) {
-            ListTag listtag = pCompound.getList("Effects", Tag.TAG_COMPOUND);
+            var listtag = pCompound.getList("Effects", Tag.TAG_COMPOUND);
             this.effects.clear();
 
             for (int i = 0; i < listtag.size(); ++i) {
-                CompoundTag tag = listtag.getCompound(i);
-                Affected affected = new Affected();
+                var tag = listtag.getCompound(i);
+                var affected = new Affected();
                 affected.id = tag.getString("Id");
                 affected.behavior = GSLRegistries.BEHAVIOR_TYPES.getValue(new ResourceLocation(tag.getString("Resource"))).create();
                 affected.behavior.deserializeNBT(tag.getCompound("Behavior"));
@@ -148,28 +158,29 @@ public class EntityProperties<T extends Strategic> {
     public void addAdditionalSaveData(CompoundTag pCompound) {
         pCompound.putInt("Duration", this.getDuration());
         pCompound.putInt("GrowthDelay", this.getGrowthDelay());
+        pCompound.putInt("DestroyDelay", this.getDestroyDelay());
         pCompound.putFloat("Width", this.getWidthInitial());
         pCompound.putFloat("Height", this.getHeightInitial());
         pCompound.putFloat("mWidth", this.getWidthFinal());
         pCompound.putFloat("mHeight", this.getHeightFinal());
-        NBTHelper.setEnum(pCompound, "TeamSelector", this.getTeamSelector());
-        NBTHelper.setEnum(pCompound, "DimensionsType", this.getDimensionsType());
+        NBTHelper.putEnum(pCompound, "TeamSelector", this.getTeamSelector());
+        NBTHelper.putEnum(pCompound, "DimensionsType", this.getDimensionsType());
 
         if (!getBehaviors().isEmpty()) {
-            ListTag listtag = new ListTag();
-            for (EntityBehavior<?> strategy : getBehaviors()) {
-                CompoundTag tag = new CompoundTag();
+            var list = new ListTag();
+            for (var strategy : getBehaviors()) {
+                var tag = new CompoundTag();
                 tag.putInt("Id", strategy.getId());
-                listtag.add(tag);
+                list.add(tag);
             }
-            pCompound.put("Behaviors", listtag);
+            pCompound.put("Behaviors", list);
         }
 
         if (!this.effects.isEmpty()) {
-            ListTag listtag = new ListTag();
+            var listtag = new ListTag();
 
-            for (Affected affected : this.effects) {
-                CompoundTag tag = new CompoundTag();
+            for (var affected : this.effects) {
+                var tag = new CompoundTag();
                 tag.putString("Id", affected.id);
                 tag.putString("Resource", affected.behavior.getType().getRegistryName().toString());
                 tag.put("Behavior", affected.behavior.serializeNBT());
