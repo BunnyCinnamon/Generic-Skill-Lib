@@ -1,140 +1,103 @@
-buildscript {
-    repositories {
-        maven { url = 'https://files.minecraftforge.net/maven' }
-        maven { url = 'https://maven.parchmentmc.org' }
-        jcenter()
-        mavenCentral()
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
-        classpath 'org.parchmentmc:librarian:1.+'
-    }
+plugins {
+    id "dev.architectury.loom" version "0.11.0-SNAPSHOT"
+    id "maven-publish"
 }
 
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'org.parchmentmc.librarian.forgegradle'
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'maven-publish'
+sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
 
-version = "${mc_version}-${mayor}.${noapi}.${minor}.${patch}${extra}"
-group = "arekkuusu"
-archivesBaseName = "GenericSkillLib"
+archivesBaseName = project.archives_base_name
+version = project.mod_version
+group = project.maven_group
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(16)
+loom {
+    silentMojangMappingsLicense()
 
-minecraft {
-    mappings channel: "${mc_mappings_channel}", version: "${mc_mappings_version}"
-    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-    runs {
-        client {
-            workingDirectory project.file('run')
-            properties 'fml.earlyprogresswindow': 'false'
-            properties 'forge.logging.console.level': 'debug'
+    forge {
 
-            mods {
-                genericskilllib {
-                    source sourceSets.main
-                }
-            }
+        mixinConfigs = [
+                "examplemod.mixins.json"
+        ]
+
+        dataGen {
+            mod project.mod_id
         }
+    }
 
-        server {
-            workingDirectory project.file('run')
-            properties 'forge.logging.console.level': 'debug'
-
-            mods {
-                genericskilllib {
-                    source sourceSets.main
-                }
-            }
-        }
-
+    launches {
         data {
-            properties 'fml.earlyprogresswindow': 'false'
-            workingDirectory project.file('run')
-            forceExit false
-
-            mods {
-                genericskilllib {
-                    source sourceSets.main
-                }
-            }
-            args '--mod', 'genericskilllib', '--all',
-                    '--existing', '"' + file('src/main/resources/') + '"',
-                    '--existing', '"' + file('src/generated/resources/') + '"',
-                    '--output', '"' + file('src/generated/resources/') + '"'
+            arg "--existing", file("src/main/resources").absolutePath
         }
     }
-}
-
-task deobfJar(type: Jar) {
-    from(sourceSets.main.output)
-    archiveName = "${archivesBaseName}-${version}-deobf.${extension}"
-}
-
-artifacts {
-    archives deobfJar
-    archives shadowJar
 }
 
 repositories {
+    maven {
+        name = "Progwml6 (Just Enough Items)"
+        url = "https://dvs1.progwml6.com/files/maven/"
+    }
+
     flatDir {
         dirs 'lib'
     }
 }
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${mc_version}-${forge_version}"
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+    mappings loom.officialMojangMappings()
+
+    forge "net.minecraftforge:forge:${project.forge_version}"
+
     compileOnly (name: 'com.expression.parser-2.0.0')
-    shadow (name: 'com.expression.parser-2.0.0')
 }
 
-jar {
-    exclude "**/*.bat"
-    exclude "**/*.psd"
-    exclude "**/*.txt"
-    exclude "**/*.d"
-    manifest {
-        attributes([
-            "Implementation-Title": project.name,
-            "Implementation-Version": "${version}",
-            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
-        ])
+processResources {
+    inputs.property "version", project.version
+
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version
     }
 }
 
-shadowJar {
-    project.configurations.shadow.setTransitive(true);
-    configurations = [project.configurations.shadow]
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
 
-    classifier ''
+    def targetVersion = 8
+    if (JavaVersion.current().isJava9Compatible()) {
+        options.release = targetVersion
+    }
 }
 
-build.dependsOn shadowJar
+java {
+    withSourcesJar()
+}
 
-jar.finalizedBy('reobfJar')
-
-def reobfFile = file("$buildDir/reobfJar/output.jar")
-def reobfArtifact = artifacts.add('default', reobfFile) {
-    //noinspection GroovyAssignabilityCheck
-    type 'jar'
-    builtBy 'reobfJar'
+jar {
+    manifest {
+        attributes([
+                "Specification-Title"     : project.mod_id,
+                "Specification-Vendor"    : project.mod_author,
+                "Specification-Version"   : "1",
+                "Implementation-Title"    : project.name,
+                "Implementation-Version"  : version,
+                "Implementation-Vendor"   : project.mod_author,
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
 }
 
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifact reobfArtifact
+            artifact(remapJar) {
+                builtBy remapJar
+            }
+            artifact(sourcesJar) {
+                builtBy remapSourcesJar
+            }
         }
     }
+
     repositories {
-        maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
-        }
     }
 }
-
-//sourceSets.main.resources {
-//    srcDir 'src/generated/resources'
-//}
